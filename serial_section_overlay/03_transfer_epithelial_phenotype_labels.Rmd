@@ -1,0 +1,1567 @@
+---
+title: "Immune to Epithelial"
+output: html_document
+date: "2024-07-08"
+---
+
+```{r setup, include=FALSE}
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+```
+
+```{CAF}
+
+#get csvs needed for caf to epithelial associations
+#adata_PDAC_lymphoid_and_myeloid_annotations_AUG2024_with_descr_and_overlay_labels.csv
+#library(readr)
+caf_data <- read.csv("000_Data/adata_PDAC_caf_clusters_k15_with_labels_and_endothelial_labels_AUG27_with_descr_and_overlay_labels.csv")
+
+
+#get correct csv names
+im_object_to_cells_files <- list.files("000_Data/object_cellids/CAF")
+im_object_to_cells_files <- paste("000_Data/object_cellids/CAF/", im_object_to_cells_files, sep = "")
+im_object_to_cells_files <- im_object_to_cells_files[grepl(".csv", im_object_to_cells_files)]
+
+#read all the separate files in, and put in a single dataframe
+im_object_to_cells <- lapply(im_object_to_cells_files, read.csv)
+im_object_to_cells <- do.call(rbind, im_object_to_cells)
+
+#transfer corresponding proportions of epithelial phenotypes, to Immune dataframe
+samplecsv <- read.csv("all_caf_samplecsvs.csv")
+
+#add a description column to im_data
+samplecsv$sample <- samplecsv$SampleName
+samplecsv$description <- samplecsv$Sample
+caf_data <- left_join(caf_data, samplecsv[,6:7], by = "sample")
+
+#Transfer object ID labels to immune dataframe. This can be instantaneous rather than many hours... with the power of left_join X_X
+colnames(im_object_to_cells) <- c("description", "caf_object_id","cell_id","cell_area")
+caf_data <- left_join(caf_data,im_object_to_cells, by= c("description","cell_id"))
+
+
+#this_image <- im_data[im_data$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#summary(as.factor(this_image$unique_object_label)) #ok, and its still here now
+
+
+#immune_lesion_phenotypes$immune_object_id <- as.character(immune_lesion_phenotypes$immune_object_id)
+#this_this_image <- immune_lesion_phenotypes[immune_lesion_phenotypes$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#ok, its still looking good in immune_lesion_phenotypes as well!
+
+write.csv(caf_data, "/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/adata_PDAC_caf_clusters_k15_with_labels_and_endothelial_labels_AUG27_with_descr_and_overlay_labels.csv")
+
+write.csv(caf_data, "/Users/ferris/Desktop/network_for_all_dist/adata_PDAC_caf_clusters_k15_with_labels_and_endothelial_labels_AUG27_with_descr_and_overlay_labels.csv")
+
+```
+
+
+
+```{CAF 2}
+#get correct csv names
+ep_object_to_im_object_files <- list.files("000_Data/aligned_object_masks/CAF_to_ep") #CAF_to_ep
+ep_object_to_im_object_files <- paste("000_Data/aligned_object_masks/CAF_to_ep/", ep_object_to_im_object_files, sep = "")
+ep_object_to_im_object_files <- ep_object_to_im_object_files[grepl(".csv", ep_object_to_im_object_files)]
+
+#read all the separate files in, and put in a single dataframe
+ep_object_to_im_object_map <- lapply(ep_object_to_im_object_files, function(file) {
+  tryCatch(
+    {
+      read.csv(file, row.names = 1)
+    },
+    error = function(e) {
+      message(paste("Error reading file:", file, ":", e$message))
+      return(NULL)  # Return NULL if there is an error
+    }
+  )
+})
+
+#ok, iterate over the list, and make a new list that just has Row #, Column #, and filename
+ep_object_to_im_object_map_list <- NA
+
+df <- ep_object_to_im_object_map[[1]]
+  # Find the indices of values greater than 0
+  indices <- which(df > 0, arr.ind = TRUE)
+  # Extract row and column names
+  row_names <- rownames(df)[indices[, 1]]
+  col_names <- colnames(df)[indices[, 2]]
+  # Combine row and column names into a data frame
+  result <- data.frame(Row = row_names, Column = col_names)
+  
+ep_object_to_im_object_map_list <- as.data.frame(matrix(ncol=3,nrow=0 ))
+colnames(ep_object_to_im_object_map_list) <- c("Row","Column","filename")
+for(i in 1:length(ep_object_to_im_object_map)){
+  df <- ep_object_to_im_object_map[[i]]
+  indices <- which(df > 0, arr.ind = TRUE)
+  if(length(indices) != 0){
+  # Extract row and column names
+  row_names <- rownames(df)[indices[, 1]]
+  col_names <- colnames(df)[indices[, 2]]
+  
+  if(length(row_names) != 0){
+  # Combine row and column names into a data frame
+  df_matched <- data.frame(Row = row_names, Column = col_names, filename = ep_object_to_im_object_files[i])
+  
+  ep_object_to_im_object_map_list <- rbind(ep_object_to_im_object_map_list, df_matched)}
+}} #error at 44 (skip those with none matching)
+#error at 567,
+
+ep_object_to_im_object_map_list$epithelial_object_id <- ep_object_to_im_object_map_list$Row
+ep_object_to_im_object_map_list$immune_object_id <- ep_object_to_im_object_map_list$Column
+ep_object_to_im_object_map_list$immune_object_id <-gsub("X","", ep_object_to_im_object_map_list$immune_object_id)
+ep_object_to_im_object_map_list$sample <- ep_object_to_im_object_map_list$filename
+
+ep_object_to_im_object_map_list$sample <- gsub("000_Data/aligned_object_masks/CAF_to_ep/","",ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <- gsub("/","",ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample<-gsub("_ac_full_Simple_Segmentation.tiff_overlap_matrix.csv","",ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <- gsub("_s0","", ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <- gsub("_a","_", ep_object_to_im_object_map_list$sample)
+
+ep_object_to_im_object_map_list$Column <-gsub("X","", ep_object_to_im_object_map_list$Column)
+
+#
+#This only has ~ 3000 overlaid objects, where immune has 24000. Why?
+#Ok: one problem is that the csv does not match the printed 'aligned' image. 
+
+
+#save matched objects
+write.csv(ep_object_to_im_object_map_list, "caf_to_epithelial_matched_pairs_by_any_overlap.csv")
+
+```
+
+
+
+#load in data 
+Data structure:
+
+My object:object mapping csvs are in “aligned_object_masks”, and are named after the epithelial half of the duo.
+
+The cell_id to object mapping is under object_cellids, separated into immune and epithelial respectively. 
+
+Goal: create phenotype labels for epithelial-data objects, transfer those labels to their corresponding immune-data objects, and immune-data cell ids. 
+
+Steps:
+
+Universal:
+1. Load in epithelial object_cellids mapping
+2. Load in my Epithelial TMA measurements.csv
+3. Create a dataframe that has each new object ID, and the proportion of that object that falls into my spatial co_occurrence categories
+
+Immune/CAF distinct label-transfer:
+4. Add a column that is the corresponding object ID in a different dataframe (this is where the mapping between immune:epithelial TMAs comes in)
+5. Load the immune object_cellids mapping
+6. Load Immune TMA measurements.csv
+7. Transfer object ID labels, and corresponding proportions of epithelial phenotypes, to Immune dataframe
+
+Immune/CAF distinct network analysis:
+8. Load in my Immune networks, which are made of only cells with epithelial phenotypes or immune phenotypes.
+
+Make my networks out of Noor's TMA filtered for only cells with epithelial phenotypes or immune phenotypes, at distance of 15 microns. Then when I load in those cell IDs here, I'll have mixed networks of immune and epithelium, 
+
+```{r load universal (epithelial) data}
+#get correct csv names
+ep_object_to_cells_files <- list.files("000_Data/object_cellids/epithelial")
+ep_object_to_cells_files <- paste("000_Data/object_cellids/epithelial/", ep_object_to_cells_files, sep = "")
+ep_object_to_cells_files <- ep_object_to_cells_files[grepl(".csv", ep_object_to_cells_files)]
+
+#read all the separate files in, and put in a single dataframe
+ep_object_to_cells <- lapply(ep_object_to_cells_files, read.csv)
+ep_object_to_cells <- do.call(rbind, ep_object_to_cells)
+
+#load my ep_data
+#ep_data <- read.csv("/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/all_by_panCK_clustered_no6_nostroma_with_ductinfo_SIMPLIFIEDumbrellagroupings_cooccureence_groups_domtoo_het_ranking.csv")
+
+ep_data <- read_csv("/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/epithelial_no6_nostroma_new_single_cell_annotations_2025_April1.csv")
+
+#ep_data7 <- ep_data[grepl("PDAC7", ep_data$description),]
+#write.csv(ep_data7, "/Users/ferris/Desktop/ep_data_slide7.csv")
+```
+
+```{epithelial data manipulation}
+#add an object_id to each cell_id/ROI_id 
+#ep_data$overlay_object_id <- NA
+#for(i in 72600:nrow(ep_data)){
+#    region <- ep_data$description[i]
+#    cell <- ep_data$CellNb[i]
+#    region_subset <- ep_object_to_cells[ep_object_to_cells$ROI_id == region,]
+#    if (any(region_subset$cell_id == cell)) {
+#        ep_data$overlay_object_id[i] <- region_subset$object_id[region_subset$cell_id == cell]
+#    } else {
+        # Optionally handle cases where no match is found (e.g., assign NA or skip)
+#        ep_data$overlay_object_id[i] <- NA  # Assigning NA in case of no match
+#    }
+#    if((i/100)%%1==0){print(i)}
+#} #this will take 2.5 hours total to complete... or maybe up 
+#up to  221400 at least
+
+#Transfer object ID labels to dataframe. This can be instantaneous rather than many hours... with the power of left_join X_X
+colnames(ep_object_to_cells) <- c("description", "overlay_object_id","cell_id","cell_area")
+ep_data$cell_id <- ep_data$CellNb
+ep_data <- left_join(ep_data,ep_object_to_cells, by= c("description","cell_id"))
+
+#write to a new csv object:
+#write.csv(ep_data, "/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/all_by_panCK_clustered_no6_nostroma_with_ductinfo_SIMPLIFIEDumbrellagroupings_cooccureence_groups_domtoo_het_ranking_OVERLAY_OBJECTS.csv")
+
+write.csv(ep_data, "/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/epithelial_no6_nostroma_new_single_cell_annotations_with_overlay_object_2025_April3.csv")
+
+#Create a dataframe that has each new object ID, and the proportion of that object that falls into my spatial co-occurrence categories
+library(dplyr)
+pheno_per_object <- ep_data %>% 
+  group_by(description, overlay_object_id, Epithelial_Cell_Annotations) %>% 
+  summarize(cooc_group_count = n())
+library(reshape2)
+pheno_per_object <- dcast(pheno_per_object, description + overlay_object_id ~ Epithelial_Cell_Annotations, value.var = "cooc_group_count")
+
+#remove NAs
+pheno_per_object[is.na(pheno_per_object)] <- 0
+
+pheno_per_object$object_size_in_epdat <- pheno_per_object$Basal + pheno_per_object$Exocrine + pheno_per_object$Hybrid + pheno_per_object$`Non-polarized` + pheno_per_object$`S100A4+ Non-Basal` + pheno_per_object$TFhigh_Classical + pheno_per_object$TFlow_Classical
+
+write.csv(pheno_per_object, "epithelial_phenotypes_per_epdata_object_2025April3.csv")
+
+ep_data <- read.csv("/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/all_by_panCK_clustered_no6_nostroma_with_ductinfo_SIMPLIFIEDumbrellagroupings_cooccureence_groups_domtoo_het_ranking_OVERLAY_OBJECTS.csv")[-1]
+pheno_per_object <- read.csv("epithelial_phenotypes_per_epdata_object.csv")[-1]
+
+```
+
+## IMMUNE 
+
+```{map immune objects to epithelial objects}
+#get correct csv names
+ep_object_to_im_object_files <- list.files("000_Data/aligned_object_masks") #CAF_to_ep
+ep_object_to_im_object_files <- paste("000_Data/aligned_object_masks/", ep_object_to_im_object_files, sep = "")
+ep_object_to_im_object_files <- ep_object_to_im_object_files[grepl(".csv", ep_object_to_im_object_files)]
+
+#read all the separate files in, and put in a single dataframe
+ep_object_to_im_object_map <- lapply(ep_object_to_im_object_files, function(file) {
+  tryCatch(
+    {
+      read.csv(file, row.names = 1)
+    },
+    error = function(e) {
+      message(paste("Error reading file:", file, ":", e$message))
+      return(NULL)  # Return NULL if there is an error
+    }
+  )
+})
+
+#ok, iterate over the list, and make a new list that just has Row #, Column #, and filename
+ep_object_to_im_object_map_list <- NA
+
+df <- ep_object_to_im_object_map[[1]]
+  # Find the indices of values greater than 0
+  indices <- which(df > 0, arr.ind = TRUE)
+  # Extract row and column names
+  row_names <- rownames(df)[indices[, 1]]
+  col_names <- colnames(df)[indices[, 2]]
+  # Combine row and column names into a data frame
+  result <- data.frame(Row = row_names, Column = col_names)
+  
+ep_object_to_im_object_map_list <- as.data.frame(matrix(ncol=3,nrow=0 ))
+colnames(ep_object_to_im_object_map_list) <- c("Row","Column","filename")
+for(i in 1:length(ep_object_to_im_object_map)){
+  df <- ep_object_to_im_object_map[[i]]
+  indices <- which(df > 0, arr.ind = TRUE)
+  if(length(indices) != 0){
+  # Extract row and column names
+  row_names <- rownames(df)[indices[, 1]]
+  col_names <- colnames(df)[indices[, 2]]
+  
+  if(length(row_names) != 0){
+  # Combine row and column names into a data frame
+  df_matched <- data.frame(Row = row_names, Column = col_names, filename = ep_object_to_im_object_files[i])
+  
+  ep_object_to_im_object_map_list <- rbind(ep_object_to_im_object_map_list, df_matched)}
+}} #error at 44 (skip those with none matching)
+#error at 567,
+
+ep_object_to_im_object_map_list$epithelial_object_id <- ep_object_to_im_object_map_list$Row
+ep_object_to_im_object_map_list$immune_object_id <- ep_object_to_im_object_map_list$Column
+ep_object_to_im_object_map_list$immune_object_id <-gsub("X","", ep_object_to_im_object_map_list$immune_object_id)
+ep_object_to_im_object_map_list$sample <- ep_object_to_im_object_map_list$filename
+ep_object_to_im_object_map_list$sample <- gsub("000_Data/aligned_object_masks/","",ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <-gsub("_ac_full_Simple_Segmentation.tiff_overlap_matrix.csv","",ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <- gsub("_s0","", ep_object_to_im_object_map_list$sample)
+ep_object_to_im_object_map_list$sample <- gsub("_a","_", ep_object_to_im_object_map_list$sample)
+
+#save matched objects
+write.csv(ep_object_to_im_object_map_list, "immune_to_epithelial_matched_pairs_by_any_overlap.csv")
+
+ep_object_to_im_object_map_list <- read.csv("immune_to_epithelial_matched_pairs_by_any_overlap.csv")[-1]
+
+#use the mapping to transfer immune labels to pheno_per_object. (I'm going to need to create a matching system between ROI name and Description again...)
+image_names_map <- ep_data[,c("sample","description")]
+image_names_map <- unique(image_names_map)
+pheno_per_object <- left_join(pheno_per_object, image_names_map, by= "description")
+
+#ok, now, ep_labels are the rownames, and immune labels are the column names. 
+#pheno_per_object$overlay_object_id
+pheno_per_object$epithelial_object_id <- pheno_per_object$overlay_object_id
+
+#ep_object_to_im_object_map_list$Row
+pheno_per_object$epithelial_object_id <- as.character(pheno_per_object$epithelial_object_id)
+ep_object_to_im_object_map_list$epithelial_object_id <- as.character(ep_object_to_im_object_map_list$epithelial_object_id)
+
+immune_lesion_phenotypes <- left_join(pheno_per_object, ep_object_to_im_object_map_list[,c("sample","epithelial_object_id","immune_object_id")], by = c("sample", "epithelial_object_id"), multiple = "all")
+
+#add a nice image_id to immune lesion phenotypes, but make sure it is using the number from the IMMUNE data, not the epithelial data
+samplecsv <- read.csv("Noor_rbind_all_samplecsvs.csv")[-1]
+#add a description column to im_data
+samplecsv$sample_immune <- samplecsv$SampleName
+samplecsv$description <- samplecsv$Sample
+
+immune_lesion_phenotypes <- left_join(immune_lesion_phenotypes, samplecsv[,5:6], by = "description")
+
+```
+
+#this is where I need to load the new immune annotations
+
+```{load rest of immune data}
+#Load the immune object_cellids mapping
+#get correct csv names
+im_object_to_cells_files <- list.files("000_Data/object_cellids/new_immune")
+im_object_to_cells_files <- paste("000_Data/object_cellids/new_immune/", im_object_to_cells_files, sep = "")
+im_object_to_cells_files <- im_object_to_cells_files[grepl(".csv", im_object_to_cells_files)]
+
+#read all the separate files in, and put in a single dataframe
+im_object_to_cells <- lapply(im_object_to_cells_files, read.csv)
+im_object_to_cells <- do.call(rbind, im_object_to_cells)
+
+#check: does im_object_to_cells have the object I am looking for?
+image_check <- im_object_to_cells[im_object_to_cells$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#ok! At this stage, im_object_to_cells does have the appropriate # of immune object ids
+
+#load my im_data
+im_data <- read.csv("adata_PDAC_lymphoid_and_myeloid_annotations_AUG2024.csv")[-1]
+
+#transfer corresponding proportions of epithelial phenotypes, to Immune dataframe
+samplecsv <- read.csv("Noor_rbind_all_samplecsvs.csv")[-1]
+
+#add a description column to im_data
+samplecsv$sample <- samplecsv$SampleName
+samplecsv$description <- samplecsv$Sample
+im_data <- left_join(im_data, samplecsv[,5:6], by = "sample")
+
+#Transfer object ID labels to immune dataframe. This can be instantaneous rather than many hours... with the power of left_join X_X
+colnames(im_object_to_cells) <- c("description", "immune_object_id","cell_id","cell_area")
+im_data <- left_join(im_data,im_object_to_cells, by= c("description","cell_id"))
+
+
+#this_image <- im_data[im_data$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#summary(as.factor(this_image$unique_object_label)) #ok, and its still here now
+
+
+#immune_lesion_phenotypes$immune_object_id <- as.character(immune_lesion_phenotypes$immune_object_id)
+#this_this_image <- immune_lesion_phenotypes[immune_lesion_phenotypes$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#ok, its still looking good in immune_lesion_phenotypes as well!
+
+write.csv(im_data, "/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/adata_PDAC_lymphoid_and_myeloid_annotations_AUG2024_with_descr_and_overlay_labels.csv") #used Barbara_Grant_2024 to add description, same as with the old immune annotations
+```
+
+
+# Actual combination of network information with overlaid information
+
+Steps:
+I have a combined dataframe that has Mask_Name, Node, Neighbours, and Neighbour_Count. I need to filter it so that it only contains immune or panCK+ cells, and isn't quite as massive.
+
+Pheno_per_object contains the overlay_object_id / epithelial_object_id, which is the phenotype found for the ID of the object from the epithelial side. im_data contains the immune_object_id, and the epithelial phenotypes.
+
+1. Add a label to im_data that contains the Mask_Name (the way to do this is probably to extract all the unique mask names in combined df, find all the immune sample.csvs, and create a conversion)
+2. Attach Mask_Name and Cell_Nb to it, to create a truly unique ID for every node, in both im_data and combined_df
+3. Make a list of Unique_IDs that are immune or epithelial (permitted IDs)
+4. Filter combined_df based on the permitted list of EPITHELIAL_AND_IMMUNE_IDs
+5. Now with a smaller dataset, filter only NODES in the epithelial list, and only NEIGHBOURS in the immune list
+6. Now with the much much smaller dataset, take each set of cells in an immune_object_id grouping, and all their neighbours, and count the number of neighbours in each Lymphoid Label category and Myeloid label category (Make a new data frame that has 1 column as "immune_object_id", 50 columns of immune labels and corresponding counts, and then epithelial proportions of that immune object.)
+7. Linear regression (?) of immune counts against epithelial proportions of each object
+
+When the networks have changed, this is where to start rerunning the code!
+
+```{networks}
+
+#cut size of immune dataset in half by focusing on only the important columns
+#im_data <- im_data[,c("cell_id","Labels","Lineage_Labels","Lymphoid_Labels","Myeloid_Labels","description","immune_object_id", "Fifth_Group", "First_Group", "Second_Group", "Third_Group", "Fourth_Group", "Sixth_Group", "object_size_in_epdat")]
+
+#write.csv(im_data, "adata_PDAC_LYMPHOID_and_MYELOID_Subclusters_obs_updated_descr_with_OVERLAY_OBJECTS_important_rows_only.csv")
+
+im_data <- read.csv("/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/adata_PDAC_lymphoid_and_myeloid_annotations_AUG2024_with_descr_and_overlay_labels.csv") 
+
+im_data_sub <- im_data[im_data$sample %in% c("2023_PDAC1_TMA_Immune_Noor_17","2023_PDAC1_TMA_Immune_Noor_35","2023_PDAC1_TMA_Immune_Noor_58"),]
+
+write.csv(im_data_sub, "/Users/ferris/Desktop/network_for_all_dist/PDAC_lymphoid_and_myeloid_annotations_test.csv")
+
+#write.csv(im_data, "/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/adata_PDAC_lymphoid_and_myeloid_annotations_AUG2024_with_descr_and_overlay_labels.csv") 
+
+#THIS LINE QUINTUPLES THE SIZE OF THE IMMUNE DATA IM WORKING WITH... LEAVE ALONE UNTIL LAST MINUTE
+#library(data.table)
+#im_data$immune_object_id <- as.character(im_data$immune_object_id)
+#im_data <- left_join(im_data,immune_lesion_phenotypes, by= c("description","immune_object_id"), multiple="all")
+
+
+
+
+#load in generated networks of all cells 30px apart. Use the masks to create cytomapper images of all networks... THEN, plot how many CD45+ neighbours are grabbed.
+connected_components_names <- list.files("000_Data/networks/immune_networks_new", pattern = ".csv", full.names = TRUE) 
+
+#read in all the touching cell lists; each image has a distinct csv
+connected_components_ls <- lapply(connected_components_names, read.csv)
+
+#clean up the names of each cell list
+names(connected_components_ls) <- gsub("000_Data/networks/immune_networks_new/|.tiff.csv", "", connected_components_names)
+
+#create a new dataframe where there are two columns, one with list name (sample name) and one with the string of connected cell IDs
+# Initialize an empty dataframe
+combined_df <- data.frame(Name = character(), Node = character(), Neighbors = character(),stringsAsFactors = FALSE)
+
+# Loop through the list of dataframes
+for (i in 1:length(names(connected_components_ls))){
+  # Get the dataframe for the current name
+  current_df <- connected_components_ls[[i]]
+  
+  #for (m in 1:nrow(current_df)){
+  # Create a new dataframe with 'Name' and 'Entry' columns
+  new_df <- data.frame(Name = names(connected_components_ls)[i], Node =  current_df$Node, Neighbors = current_df$Neighbors)
+
+  # Append the new dataframe to the combined dataframe
+  combined_df <- rbind(combined_df, new_df)
+  print(i)
+} #}
+
+mask_names <- unique(combined_df$Name)
+
+#Add a column numbering the lesion
+#combined_df$Lesion <- c(1:nrow(combined_df))
+
+# Reset row names
+rownames(combined_df) <- NULL
+
+#great, now count number of unique cells in each row
+library(stringr)
+#input_string <- "38..7..16..21..25." #for contact based graph
+#for distance based graph, its more like [209, 238, 252, 259, 260, 270, 295, 316, 320, 331, 361, 362, 376, 382, 398, 403, 410, 424, 450, 461, 476, 493, 519]
+
+# Use regular expression to count the number of integers separated by ".."
+combined_df$count <- str_count(combined_df$Neighbors, ",")
+
+#combined_df <- combined_df[,c(1:3,5)]
+
+write.csv(combined_df, "new_immune_data_50px_neighbours_per_node.csv")
+
+
+library(tidyverse)
+
+combined_df  <- combined_df %>%
+  separate_rows(Neighbors, sep = ",")
+
+combined_df$Neighbors <- gsub("\\[", "", combined_df$Neighbors)
+combined_df$Neighbors <- gsub("\\]", "", combined_df$Neighbors)
+combined_df$Neighbors <- gsub("\\s", "", combined_df$Neighbors)
+
+write.csv(combined_df, "new_immune_data_50px_neighbours_per_node_expanded.csv")
+#combined_df <- read.csv("new_immune_data_30px_neighbours_per_node_expanded.csv")
+#ok, I now have combined_df, which contains how everything touches. I need to take any Node that's part of mask_names
+
+sample_csv_names <- list.files("IMC_Data_Noor/Sample_csvs", pattern = ".csv", full.names = TRUE) 
+
+#read in all the touching cell lists; each image has a distinct csv
+sample_csv <- lapply(sample_csv_names, read.csv)
+
+sample_df <- data.frame(TiffName = character(), Sample = character(), SampleName = character(), MCDFileName = character(), stringsAsFactors = FALSE)
+
+for (i in 1:length(sample_csv)){
+  # Get the dataframe for the current name
+  current_df <- sample_csv[[i]]
+  # Append the new dataframe to the combined dataframe
+  sample_df  <- rbind(sample_df , current_df)
+  print(i)
+}
+
+
+#great, now I just need to use SampleName to attach the appropriate mask_name
+sample_df$image_id <- gsub("2023_(PDAC\\d{1})_TMA_Immune_Noor_", "\\1_", sample_df$SampleName)
+mask_names <- as.data.frame(mask_names)
+mask_names$image_id <- gsub("first_degree_neighbours_immune_mmp1_50px_distance_2023_(PDAC\\d{1})_TMA_Immune_Noor_", "\\1_", mask_names$mask_names)
+mask_names$image_id <- gsub("_ac_IA_mask", "", mask_names$image_id )
+mask_names$image_id <- gsub("s0_a", "", mask_names$image_id )
+
+#do the same to combined df
+combined_df$Name <- gsub("first_degree_neighbours_immune_mmp1_50px_distance_2023_(PDAC\\d{1})_TMA_Immune_Noor_", "\\1_", combined_df$Name) 
+combined_df$Name <- gsub("_ac_IA_mask", "", combined_df$Name) 
+combined_df$Name <- gsub("s0_a", "", combined_df$Name) 
+
+write.csv(combined_df, "new_immune_data_50px_neighbours_per_node_expanded.csv")
+#combined_df <- read.csv("new_immune_data_30px_neighbours_per_node_expanded.csv")
+
+#attach
+sample_df <- left_join(sample_df, mask_names, by = "image_id")
+
+sample_df <- sample_df[,c(2,5)]
+colnames(sample_df) <- c("description","image_id")
+
+sample_df <- sample_df[sample_df$description %in% im_data$description,]
+
+#im_data <- read.csv("adata_PDAC_LYMPHOID_and_MYELOID_Subclusters_obs_updated_descr_with_OVERLAY_OBJECTS_important_rows_only.csv")
+#now add the image_id to im_data
+
+#im_data <- left_join(im_data, sample_df, by = "description", multiple ='any') #maybe this is what ruins it
+
+im_data$image_id <- gsub("2023_(PDAC\\d{1})_TMA_Immune_Noor_", "\\1_", im_data$sample)
+
+im_data$unique_cell_label <- paste(im_data$image_id, im_data$cell_id, sep = "_")
+
+combined_df$unique_cell_label <- paste(combined_df$Name, combined_df$Node, sep = "_")
+combined_df$unique_cell_label_neighbour <- paste(combined_df$Name, combined_df$Neighbors, sep = "_")
+
+#Attach Mask_Name and Cell_Nb to it, to create a truly unique ID for every node, in both im_data and combined_df
+#Make a list of Unique_IDs that are immune or epithelial (permitted IDs)
+
+#ep_cell_ids <- im_data$unique_cell_label[im_data$Labels %in% c("Epithelial cells")] #skip this, I think it might be getting in the way
+#this_image <- im_data[im_data$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#summary(as.factor(this_image$immune_object_id))
+
+
+im_cell_ids <- im_data$unique_cell_label[im_data$Labels %in% c("Immune cells")]
+
+#filter combined_df
+#combined_df <- combined_df[combined_df$unique_cell_label %in% ep_cell_ids,] skip this, I think maybe some cells that are panCK+ are getting dropped from being called epithelial cells, and its preventing proper object overlay for small objects (just a theory)
+combined_df <- combined_df[combined_df$unique_cell_label_neighbour %in% im_cell_ids,] #but, I will keep it so I only check cells that have an immune neighbour
+
+  
+#write.csv(combined_df, "new_immune_data_30px_neighbours_per_node_expanded_filtered_to_epnodes_imneighbours.csv")
+#combined_df<-read.csv("new_immune_data_30px_neighbours_per_node_expanded_filtered_to_epnodes_imneighbours.csv")
+
+write.csv(combined_df, "new_immune_data_30px_neighbours_per_node_expanded_all_nodes_but_filtered_to_imneighbours.csv") #its TEN times larger without cutting out epithelial cells...
+
+#combined_df <- read.csv("new_immune_data_30px_neighbours_per_node_expanded_all_nodes_but_filtered_to_imneighbours.csv")
+
+#THIS IS HOW I CAN ADD PHENOTYPES
+#now, use the im_data that DOESN'T have the phenotypes added to it (that QUINTUPLES SIZE) and count immune labels per immune_object id
+#first, take only epithelial cells that are found in an immune_object_id 
+
+colnames(im_data)
+write.csv(im_data, "working_im_data_object.csv")
+#im_data <- read.csv("working_im_data_object.csv") #just so I can restart from this point, in case I forget how to make this exact im_data object
+
+#check working object
+#long_df <- read.csv("working_im_data_object.csv")
+#this_image <- long_df[long_df$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#summary(as.factor(this_image$immune_object_id)) #OK OK OK. But the time I reached working_object, it was gone!
+
+#im_data_ep_cells <- im_data[im_data$unique_cell_label %in% ep_cell_ids,] #I shouldn't lazily use "ep_cell_ids" here, I should use the ACTUAL cell ids that overlap. Which I do have a matrix of RETURNHERE
+im_data_ep_cells <- im_data[im_data$immune_object_id != "0",]
+
+im_data_im_cells <- im_data[im_data$unique_cell_label %in% im_cell_ids,]
+
+#filter to only epithelial cells that are part of an immune_object
+#summary(as.factor(im_data_ep_cells$immune_object_id)) the largest group overlap with zeros!
+#im_data_ep_cells <- im_data_ep_cells[!im_data_ep_cells$immune_object_id %in% c("0"),]
+
+#ok, so I DO actually need to refres
+
+#filter combined_df so it only contains NODES that are present in im_data_ep_cells
+combined_df <- combined_df[combined_df$unique_cell_label %in% im_data_ep_cells$unique_cell_label,]
+write.csv(combined_df, "working_combined_data_object_nodes_im_ep_cell_in_im_object_NO_EPITHELIAL_LABELS.csv")
+
+#combined_df <-read.csv("working_combined_data_object_nodes_im_ep_cell_in_im_object_NO_EPITHELIAL_LABELS.csv")
+#combined_df <- combined_df[-1]
+#make a unique object label
+im_data_ep_cells$unique_object_label <- paste(im_data_ep_cells$image_id, im_data_ep_cells$immune_object_id, sep = "_")
+#check that its still there
+#this_image <- im_data_ep_cells[im_data_ep_cells$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+#summary(as.factor(this_image $immune_object_id)) #OK OK OK. But the time I reached working_object, it was gone!
+#STILL GOOD GOOD
+
+#there are 26755 total unique lesions that have overlapping partners in both datasets
+
+#could I assign a unique_object_label to every row in combined_df?, with multiple = "all"?
+#the unique object label of "nearby immune per object" is the object that the epithelial cell belongs to
+combined_df_all <- left_join(combined_df, im_data_ep_cells[,c("unique_cell_label", "unique_object_label")], by = "unique_cell_label", multiple = "all")
+
+#combine myeloid and lymphoid labels into one column, and add them to combined df (based on the unique_cell_label_neighbour column)
+#remove non immune cells from consideration for now
+im_data_im_cells <- im_data[grepl("Lymphoid cells|Myeloid cells", im_data$Lineage_Labels),]
+
+#add a column that is a merged version of Myeloid and Lymphoid labels
+im_data_im_cells <- im_data_im_cells %>%
+  mutate(Merged_Immune_Labels = ifelse(Lymphoid_Labels == "Others", 
+                                Myeloid_Labels, 
+                                Lymphoid_Labels))
+
+#make sure I have a column named the same in combined_df_all and im_data_im_cells, for matching
+im_data_im_cells$unique_cell_label_neighbour <- im_data_im_cells$unique_cell_label
+
+combined_df_all <- left_join(combined_df_all, im_data_im_cells[,c("Merged_Immune_Labels","unique_cell_label_neighbour")], by = "unique_cell_label_neighbour", multiple = "all")
+
+#then, summarize Merged_Immune_Labels by unique_object_label, and make that its own dataframe
+library(dplyr)
+
+#OK!!!! It's in combined df all at least!!
+#sum(combined_df_all$unique_object_label == "PDAC7_126_199")
+#[1] 403
+
+# Summarize counts of each Merged_Immune_Labels within each unique_object_label
+nearby_immune_per_object <- combined_df_all %>%
+  group_by(unique_object_label, Merged_Immune_Labels) %>%
+  summarise(count = n()) %>%
+  arrange(unique_object_label, Merged_Immune_Labels)
+
+#sum(nearby_immune_per_object$unique_object_label  == "PDAC7_126_199") #and its in here now!! 27 diff cell types
+
+# View the summary dataframe
+#write.csv(nearby_immune_per_object, "nearby_immune_per_object.csv")
+
+#THIS COST YOU MULTIPLE WORK DAYS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#add a new column to immune_lesion_phenotypes that allows it to match with nearby_immune_per_object
+immune_lesion_phenotypes$image_id <-  gsub("2023_(PDAC\\d{1})_TMA_Immune_Noor", "\\1", immune_lesion_phenotypes$sample_immune)
+#immune_lesion_phenotypes$image_id <-  gsub("TMA_2022_(PDAC\\d{1})_", "\\1_", immune_lesion_phenotypes$image_id)
+#immune_lesion_phenotypes$image_id <-  gsub("Ferris_", "", immune_lesion_phenotypes$image_id)
+
+#
+im_object_to_cells_CHECK <- im_object_to_cells
+im_object_to_cells_CHECK <- im_object_to_cells_CHECK[im_object_to_cells_CHECK$immune_object_id != "0",]
+im_object_to_cells_CHECK$image_id_checker <- paste(im_object_to_cells_CHECK$description, im_object_to_cells_CHECK$immune_object_id, sep = "_") #total # of unique objects IN NOOR's DATA (that aren't background) is 29118. So, the number I'm picking up is correct
+
+#get rid of any object phenotypes that don't have a matching object in immune: they aren't helpful right now
+immune_lesion_phenotypes <- immune_lesion_phenotypes[!is.na(immune_lesion_phenotypes$immune_object_id),]
+
+immune_lesion_phenotypes$unique_object_label <- paste(immune_lesion_phenotypes$image_id, immune_lesion_phenotypes$immune_object_id, sep="_")
+#its NOT IN HERE ANYMORE. Dim 21006 by 15. Originally, it was 28948 by 12.
+
+
+
+immune_lesion_phenotypes$unique_object_label_ep_side <- paste(immune_lesion_phenotypes$image_id, immune_lesion_phenotypes$epithelial_object_id, sep="_")
+
+#join my counts per phenotype and object size information with the dataframe that contains nearby_immune_per_object
+
+#if there are multiple matches, that means that multiple epithelial object match the same immune object, in which case I want to record the phenotype of each. HOWEVER, this will duplicate the immune cells that are supposedly near each. So, the better way to do it, is perhaps to 'average out' the phenotypes of the epithelial lesions that share the same im_object label
+immune_lesion_phenotypes_summed <- immune_lesion_phenotypes %>%
+  group_by(unique_object_label) %>%
+  summarize(
+    Fifth_Group = sum(Fifth_Group, na.rm = TRUE),
+    First_Group = sum(First_Group, na.rm = TRUE),
+    Fourth_Group = sum(Fourth_Group, na.rm = TRUE),
+    Second_Group = sum(Second_Group, na.rm = TRUE),
+    Sixth_Group = sum(Sixth_Group, na.rm = TRUE),
+    Third_Group = sum(Third_Group, na.rm = TRUE),
+    object_size_in_epdat = sum(object_size_in_epdat, na.rm = TRUE)
+  )
+
+#there are some objects in nearby_immune_per_object that have no phenotype... actually, its most of them. That seems like a mistake. Damn it. #alright!!! Now ~1600 have overlap... how did it go DOWN, what the heck
+nearby_immune_per_object_filtered <- nearby_immune_per_object$unique_object_label[nearby_immune_per_object$unique_object_label %in% immune_lesion_phenotypes_summed$unique_object_label]
+
+#now, with the new ilastik, there are 18912 objects in immune_lesion_phenotypes_summed$unique_object_label. I only gained 1000 objects from the whole retraining... that doesn't make that much sense.
+#there are 17770 objects in immune_lesion_phenotypes_summed$unique_object_label, and 26196 in nearby_immune_per_object$unique_object_label. The 17770 are the ones that have overlap, whereas the 26196 are all immune objects that have 'epithelial cell' labels. Yet, I only get 2856 overlapping objects when try to combine. Something is wrong. Maybe I should remove the restriction that they have to be labelled as an epithelial cell? It's still only 3010 when I try to combine, even without removing non-epithelial annotated cells. WHYYYYY
+length(unique(nearby_immune_per_object$unique_object_label[nearby_immune_per_object$unique_object_label %in% immune_lesion_phenotypes_summed$unique_object_label])) #THERRRRRE WE GO, 11936 objects overlap!
+length(unique(immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label])) #14142 overlap, now that the 3 mistake slides have been fixed!
+
+overlapped_objects_with_immune_nearby <- unique(immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label]) #check which immune
+
+overlapped_objects_with_immune_nearby <- unique(immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label])
+
+#there are 1651 unique objects
+#and they are in only 347 images
+unique(gsub("(.*_.*)(_.*)", "\\1", overlapped_objects_with_immune_nearby))
+
+overlapped_objects_with_immune_nearby_sum <- as.data.frame(immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label])
+overlapped_objects_with_immune_nearby_sum$image <- gsub("(.*_.*)(_.*)", "\\1", overlapped_objects_with_immune_nearby)
+overlapped_objects_with_immune_nearby_sum$slide <- gsub("(.*)(_.*_.*)", "\\1", overlapped_objects_with_immune_nearby)
+
+#the one with the most overlap and immune attachments is PDAC3_5 (in immune) aka PDAC3_58 in epithelial, aka PDAC3_Sector2Row1Column6_Punch2_Case85_ID_G_25488
+
+
+
+#ok OK OK. The one with the most overlapping objects, the epithelial segmentation mask is not rotated the right way to match the ilastik object mask!!!!
+
+
+#ok, so we have 11936 objects that overlap
+unique(immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label])
+
+lesion_pheno_im_counts <- left_join(nearby_immune_per_object, immune_lesion_phenotypes_summed, by = "unique_object_label")
+
+#remove the slides that are incorrect; I'll come back for them after I have my basic outcomes
+lesion_pheno_im_counts$slide <- gsub("(.*)(_.*_.*)", "\\1", lesion_pheno_im_counts$unique_object_label)
+#lesion_pheno_im_counts <- lesion_pheno_im_counts[!lesion_pheno_im_counts$slide %in% c("PDAC2","PDAC3","PDAC8"),]
+
+library(dplyr)
+library(tidyr)
+
+# Assuming lesion_pheno_im_counts is already loaded as a dataframe
+
+# Step 1: Reshape the DataFrame to long format
+long_df <- lesion_pheno_im_counts %>%
+  pivot_longer(cols = ends_with("Group"), 
+               names_to = "Epithelial_Type", 
+               values_to = "Epithelial_Count")
+
+#remove unique_object_label for now
+#long_df <- long_df[-1] #half of long_df is lacking an epithelial phenotype.. even though there are overlapping objects. Pity.
+long_df <- long_df[!is.na(long_df$object_size_in_epdat),]
+
+
+library(dplyr)
+library(ggplot2)
+library(lme4)
+
+#ok, important question. Could we just do an ANOVA?
+#what if I just do a basic contingency table?
+
+#what if I do Fisher's Exact Test?
+#df_for_fe <- long_df[,!colnames(long_df) %in% c("object_side_in_epdat","slide")]
+library(data.table)
+# Convert to data.table
+lesion_pheno_im_counts_dt <- as.data.table(lesion_pheno_im_counts)
+# Define the constant columns
+constant_columns <- c("Fifth_Group", "First_Group", "Fourth_Group", "Second_Group", "Sixth_Group", "Third_Group","object_size_in_epdat")
+
+df_for_fe <- lesion_pheno_im_counts_dt[, 
+  .(count = sum(count, na.rm = TRUE)), 
+  by = .(unique_object_label, Merged_Immune_Labels)
+]
+# Pivot wider
+df_for_fe <- dcast(df_for_fe, unique_object_label ~ Merged_Immune_Labels, value.var = "count")
+#this contains 24240 objects; presumably all epithelial objects with overlap, whether they have immune nearby or not. I
+#add epithelial values back in
+constant_values <- lesion_pheno_im_counts_dt[, 
+                                             lapply(.SD, unique), 
+                                             by = unique_object_label, 
+                                             .SDcols = constant_columns]
+
+# Merge the constant columns back into the final result
+df_for_fe <- merge(df_for_fe, constant_values, by = "unique_object_label")
+df_for_fe[is.na(df_for_fe)] <- 0
+
+df_for_fe$First_Group <- df_for_fe$First_Group / df_for_fe$object_size_in_epdat
+df_for_fe$Second_Group <- df_for_fe$Second_Group / df_for_fe$object_size_in_epdat
+df_for_fe$Third_Group <- df_for_fe$Third_Group / df_for_fe$object_size_in_epdat
+df_for_fe$Fourth_Group <- df_for_fe$Fourth_Group / df_for_fe$object_size_in_epdat
+df_for_fe$Fifth_Group <- df_for_fe$Fifth_Group / df_for_fe$object_size_in_epdat
+df_for_fe$Sixth_Group <- df_for_fe$Sixth_Group / df_for_fe$object_size_in_epdat
+
+df_for_fe[is.na(df_for_fe)] <- 0
+
+#remove 'object_size_in_epdat'
+df_for_fe <- df_for_fe[-60]
+
+#add an object_size_in_imdat
+ im_data$unique_object_label <- paste(im_data$image_id, im_data$immune_object_id, sep = "_")
+ im_data$unique_object_label
+ 
+im_data <- im_data %>%
+  group_by(unique_object_label) %>%
+  mutate(object_size_in_imdat = n())
+
+
+df_for_fe <- left_join(df_for_fe, unique(im_data[c("unique_object_label", "object_size_in_imdat")]))
+
+df_for_fe_scaled <- df_for_fe
+df_for_fe_scaled[immune_columns] <- df_for_fe[immune_columns] / df_for_fe$object_size_in_imdat
+
+#write.csv(df_for_fe, "epithelial_and_immune_counts_per_matched_object_30px_radius.csv")
+#write.csv(df_for_fe, "epithelial_and_immune_counts_per_matched_object_30px_radius_by_proportion.csv")
+write.csv(df_for_fe_scaled, "epithelial_and_immune_counts_per_matched_object_30px_radius_by_proportion_and_immune_scaled.csv")
+df_for_fe_scaled <- df_for_fe_scaled[-60]
+epithelial_columns <- constant_columns[1:6]
+immune_columns <- colnames(df_for_fe)[2:53]
+df_for_fe 
+
+```
+
+#skippable
+
+```{skip this alright then}
+#make a basic boxplot, for each combination of immune+epithelial:
+wide_df_plot <- melt(wide_df[,-c(2:3)])
+# Create the ggplot
+png("basic_barplot_immune_by_epithelial_sorted_by_epithelial.png", res =300, units = "in", height = 8, width = 20)
+ggplot(wide_df_plot, aes(x = interaction(Merged_Immune_Labels, variable), y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Merged Immune Labels + Variable", y = "Value", fill = "Variable") +
+  theme(axis.text.x = element_text(angle = 75, hjust = 1, size =3)) +
+  scale_x_discrete(labels = function(x) gsub("(.*)\\.(.*)", "\\1", x)) #labels = unique(wide_df_plot$Merged_Immune_Labels)
+dev.off()
+
+
+
+png("basic_barplot_immune_by_epithelial_sorted_by_immune.png", res =300, units = "in", height = 8, width = 20)
+ggplot(wide_df_plot, aes(x = interaction(variable, Merged_Immune_Labels), y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Merged Immune Labels + Variable", y = "Value", fill = "Variable") +
+  theme(axis.text.x = element_text(angle = 75, hjust = 1, size =3)) +
+  scale_x_discrete(labels = function(x) gsub("(.*)\\.(.*)", "\\2", x)) #labels = unique(wide_df_plot$Merged_Immune_Labels)
+dev.off()
+
+
+#is the numeric variable Dying MDSCs associated with changes in proportion of any of 6 other categories? Try plotting proportion
+for (immune_col in immune_columns) {
+  for (epithelial_col in epithelial_columns) {
+
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  for (epithelial_col in epithelial_columns) {
+    # Construct the contingency table
+    contingency_table <- table(df_for_fe[[immune_col]], df_for_fe[[epithelial_col]])
+    
+    # Perform the Chi-Square Test
+    chi_test <- chisq.test(contingency_table)
+    
+    # Store the results
+    results[[paste(immune_col, epithelial_col, sep = "_")]] <- list(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      chi2_statistic = chi_test$statistic,
+      p_value = chi_test$p.value,
+      degrees_of_freedom = chi_test$parameter
+    )
+  }
+}
+
+# Convert the results to a data frame for easier viewing
+results_df <- do.call(rbind, lapply(results, as.data.frame))
+results_df <- as.data.frame(results_df, stringsAsFactors = FALSE)
+
+# Print the results
+print(results_df)
+
+
+library(dplyr)
+# Filter for significant results (e.g., p-value < 0.05)
+significant_results <- results_df %>% filter(p_value < 0.05)
+print(significant_results)
+
+
+
+
+# CHECK IF THE EXPECTED VALUES ARE VERY SMALL
+results <- list()
+
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  for (epithelial_col in epithelial_columns) {
+    # Construct the contingency table
+    contingency_table <- table(df_for_fe[[immune_col]], df_for_fe[[epithelial_col]])
+    
+    # Perform the Chi-Square Test
+    chi_test <- chisq.test(contingency_table)
+    
+    # Check if any expected counts are less than 5
+    if(any(chi_test$expected < 5)) {
+      warning(paste("Expected count less than 5 for", immune_col, "and", epithelial_col))
+    }
+    
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      chi2_statistic = chi_test$statistic,
+      p_value = chi_test$p.value,
+      degrees_of_freedom = chi_test$parameter
+    )))
+  }
+}
+
+# Combine the results into a single data frame
+results_df <- bind_rows(results)
+
+# Print the results
+print(results_df)
+
+#there were many warnings. Try using Fisher's Exact Test instead
+
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  for (epithelial_col in epithelial_columns) {
+    # Construct the contingency table
+    contingency_table <- table(df_for_fe[[immune_col]], df_for_fe[[epithelial_col]])
+    
+    # Perform Fisher's Exact Test
+    fisher_test <- fisher.test(contingency_table)
+    
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      p_value = fisher_test$p.value
+    )))
+  }
+}
+
+# Combine the results into a single data frame
+results_df <- bind_rows(results)
+
+# Print the results
+print(results_df)
+
+library(vcd)
+
+# Function to calculate Cramér's V
+cramers_v <- function(contingency_table) {
+  chi2 <- chisq.test(contingency_table)$statistic
+  n <- sum(contingency_table)
+  min_dim <- min(dim(contingency_table)) - 1
+  return(sqrt(chi2 / (n * min_dim)))
+}
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  for (epithelial_col in epithelial_columns) {
+    # Construct the contingency table
+    contingency_table <- table(df_for_fe[[immune_col]], df_for_fe[[epithelial_col]])
+    
+    # Perform the Chi-Square Test
+    chi_test <- chisq.test(contingency_table)
+    
+    # Calculate Cramér's V
+    v <- cramers_v(contingency_table)
+    
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      chi2_statistic = chi_test$statistic,
+      p_value = chi_test$p.value,
+      cramers_v = v,
+      degrees_of_freedom = chi_test$parameter
+    )))
+  }
+}
+
+# Combine the results into a single data frame
+results_df <- bind_rows(results)
+
+# Print the results
+print(results_df)
+
+#summary(results_df$cramers_v)
+
+write.csv(results_df, "epithelial_and_immune_counts_per_matched_object_30px_radius_effect_sizes_by_proportion.csv")
+
+
+#make a ggplot of this:
+results_df
+
+png("Effect_Sizes_by_CramersV_within_30pixels_by_proportions.png", res = 300, units = "in", height = 8, width = 11)
+hist(results_df$cramers_v, breaks = 50, main = "Cramer's V Effect Sizes of Chi-Squared Test associating Immune Cell Types with Epithelial Content")
+dev.off()
+
+results_df <- results_df[order(results_df$cramers_v),]
+
+results_df[,1:20]
+
+
+#try fisher's approximate test (fisher's exact runs out of memory on a dataset this large)
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  print(immune_col)
+  for (epithelial_col in epithelial_columns) {
+    # Construct the contingency table
+    contingency_table <- table(df_for_fe[[immune_col]], df_for_fe[[epithelial_col]])
+    
+    # Perform Fisher's Exact Test with Monte Carlo simulation
+    fisher_test <- tryCatch({
+      fisher.test(contingency_table, simulate.p.value = TRUE, B = 1e3)
+    }, error = function(e) {
+      message(paste("Fisher's test failed for", immune_col, "and", epithelial_col, ":", e$message))
+      return(NULL)
+    })
+    
+    if (!is.null(fisher_test)) {
+      # Store the results
+      results <- append(results, list(data.frame(
+        immune_cell_type = immune_col,
+        epithelial_cell_type = epithelial_col,
+        p_value = fisher_test$p.value
+      )))
+    }
+  }
+}
+
+# Combine the results into a single data frame
+results_df <- bind_rows(results)
+
+# Print the results
+print(results_df)
+
+# Filter for significant results (e.g., p-value < 0.05)
+significant_results <- results_df %>% filter(p_value < 0.05)
+print(significant_results)
+```
+```{skip this permutation test}
+library(dplyr)
+
+# Function to calculate Chi-Square statistic
+calc_chisq_stat <- function(contingency_table) {
+  chisq_test <- chisq.test(contingency_table)
+  return(chisq_test$statistic)
+}
+
+# Function to perform permutation test
+permutation_test <- function(df, immune_col, epithelial_col, n_permutations = 1000) {
+  # Construct the contingency table for original data
+  original_table <- table(df[[immune_col]], df[[epithelial_col]])
+  original_stat <- calc_chisq_stat(original_table)
+  
+  # Initialize a vector to store permutation statistics
+  perm_stats <- numeric(n_permutations)
+  
+  # Perform permutations
+  for (i in 1:n_permutations) {
+    # Shuffle the epithelial column
+    shuffled_epithelial <- sample(df[[epithelial_col]])
+    perm_table <- table(df[[immune_col]], shuffled_epithelial)
+    perm_stats[i] <- calc_chisq_stat(perm_table)
+  }
+  
+  # Calculate the p-value
+  p_value <- mean(perm_stats >= original_stat)
+  
+  return(p_value)
+}
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  print(immune_col)
+  for (epithelial_col in epithelial_columns) {
+    print(epithelial_col)
+    # Perform permutation test
+    p_value <- permutation_test(df_for_fe, immune_col, epithelial_col, n_permutations = 1000)
+    
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      p_value = p_value
+    )))
+  }
+} #started at 2:03pm. If it hasn't moved by 2:10, then I need to make it faster. It's 4 in by 2:07. That's like 1 a minute. So 300 minutes to run a permutation test at n = 1000.
+
+# Combine the results into a single data frame
+results_df <- bind_rows(results)
+
+# Print the results
+print(results_df)
+
+
+```
+```{skip this permutation but faster}
+# Load necessary libraries
+library(dplyr)
+library(parallel)
+
+# Function to calculate Chi-Square statistic
+calc_chisq_stat <- function(contingency_table) {
+  chisq_test <- chisq.test(contingency_table)
+  return(chisq_test$statistic)
+}
+
+# Function to perform permutation test
+permutation_test <- function(df, immune_col, epithelial_col, n_permutations = 1000) {
+  # Construct the contingency table for original data
+  original_table <- table(df[[immune_col]], df[[epithelial_col]])
+  original_stat <- calc_chisq_stat(original_table)
+  
+  print(original_stat)
+  
+  # Initialize a vector to store permutation statistics
+  perm_stats <- numeric(n_permutations)
+  
+  # Perform permutations in parallel
+  cl <- makeCluster(detectCores() - 1) # Use one less core than available
+  clusterExport(cl, c("df", "immune_col", "epithelial_col", "calc_chisq_stat"))
+  
+  perm_stats <- parSapply(cl, 1:n_permutations, function(i) {
+    shuffled_epithelial <- sample(df[[epithelial_col]])
+    perm_table <- table(df[[immune_col]], shuffled_epithelial)
+    calc_chisq_stat(perm_table)
+  })
+  
+  stopCluster(cl)
+  
+  print(perm_stats)
+  
+  # Calculate the p-value
+  p_value <- mean(perm_stats >= original_stat)
+  
+  return(p_value)
+}
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  print(immune_col)
+  for (epithelial_col in epithelial_columns) {
+    print(epithelial_col)
+    # Perform permutation test
+    p_value <- permutation_test(df_for_fe, immune_col, epithelial_col, n_permutations = 1000)
+    print(p_value)
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      p_value = p_value
+    )))
+  }
+} #this does speed things up significantly. 3 deep in 30 seconds. 10 seconds * 300 = 50 minutes to finish, when n_permutations = 1000. That's not terrible. Although, it means it would take 10 hours to finish at n = 10k, which is a more reasonable final number of permutations.
+
+#I think the reason everything is significant is because there are so many zeros. Try removing all the ones that don't have any associated epithelial typings- see if that helps
+df_for_fe_trim <- df_for_fe[rowSums(df_for_fe[epithelial_columns]) == 1,] 
+
+# Initialize an empty list to store the results
+results <- list()
+
+# Loop through each pair of immune and epithelial cell types
+for (immune_col in immune_columns) {
+  print(immune_col)
+  for (epithelial_col in epithelial_columns) {
+    print(epithelial_col)
+    # Perform permutation test
+    p_value <- permutation_test(df_for_fe_trim, immune_col, epithelial_col, n_permutations = 1000)
+    print(p_value)
+    # Store the results
+    results <- append(results, list(data.frame(
+      immune_cell_type = immune_col,
+      epithelial_cell_type = epithelial_col,
+      p_value = p_value
+    )))
+  }
+}
+
+
+sanitize_name <- function(name) {
+  gsub("[/\\?%*:|\"<> ]", "_", name)
+}
+
+immune_columns_clean <- sanitize_name(immune_columns)
+immune_columns_clean <- gsub("\\+","pos", immune_columns_clean)
+immune_columns_clean <- gsub("\\-","neg", immune_columns_clean)
+
+colnames(df_for_fe_trim) <- sapply(colnames(df_for_fe_trim), sanitize_name)
+colnames(df_for_fe_trim) <- gsub("\\+","pos", colnames(df_for_fe_trim))
+colnames(df_for_fe_trim) <- gsub("\\-","neg", colnames(df_for_fe_trim))
+#sample(df_for_fe_trim[[epithelial_col]])
+
+#switch for better names:
+colnames(df_for_fe_trim)[51:56] <- c("NonMalignant", "Residual_Classical", "Basal", "Active_Classical", "Mixed_Neither", "Mixed_Secretory_Hybrid")
+epithelial_columns_new <- c("NonMalignant", "Residual_Classical", "Basal", "Active_Classical", "Mixed_Neither", "Mixed_Secretory_Hybrid")
+
+for (immune_col in immune_columns_clean) {
+  for (epithelial_col in epithelial_columns_new) {
+    image_name <- paste(immune_col, "_by_", epithelial_col, "_scatterplot.png", sep = "")
+#png(image_name, res = 300, units = "in", height = 8, width = 11)
+plot <- ggplot(df_for_fe_trim, aes(x = df_for_fe_trim[,immune_col], y = df_for_fe_trim[,epithelial_col])) +
+         geom_point(alpha = 0.2) +
+  xlab(immune_col) +
+  ylab(epithelial_col) +
+  theme_classic()
+ggsave(plot = plot, filename = image_name, device = "png") }}
+
+```
+
+Ok. Philosophically. The true distribution of immune cells is not random. The biggest reason for this will be that if you have 1 immune cell of a certain type, you are likely to have more of it nearby. Similarly, if you have an epithelial cell of a certain type, you are likely to have more of it nearby. This effect is biasing my significance tests. If I truly randomize immune cells, or epithelial cells, during a permutation test, and then compare to reality, then it seems like reality is significantly different. But I'm really only measuring like-attraction, and then the artificial disappearance of it. 
+
+How can I overcome this?
+
+How can I measure enrichment of certain cell types being associated with each other?
+
+If I keep the groupings of immune cells the same, and the groups of epithelial cells the same
+
+
+# Logistic Regression to test associations
+
+```{try logistic regression}
+
+#df_for_fe_trim <- df_for_fe[rowSums(df_for_fe[epithelial_columns]) == 1,] 
+
+#try the scaled version!
+df_for_fe_trim <- df_for_fe_scaled[rowSums(df_for_fe_scaled[epithelial_columns]) == 1,] 
+
+sanitize_name <- function(name) {
+  gsub("[/\\?%*:|\"<> ]", "_", name)
+}
+
+immune_columns_clean <- sanitize_name(immune_columns)
+immune_columns_clean <- gsub("\\+","pos", immune_columns_clean)
+immune_columns_clean <- gsub("\\-","neg", immune_columns_clean)
+
+colnames(df_for_fe_trim) <- sapply(colnames(df_for_fe_trim), sanitize_name)
+colnames(df_for_fe_trim) <- gsub("\\+","pos", colnames(df_for_fe_trim))
+colnames(df_for_fe_trim) <- gsub("\\-","neg", colnames(df_for_fe_trim))
+#sample(df_for_fe_trim[[epithelial_col]])
+
+#switch for better names:
+colnames(df_for_fe_trim)[54:59] <- c("NonMalignant", "Residual_Classical", "Basal", "Active_Classical", "Mixed_Neither", "Mixed_Secretory_Hybrid")
+epithelial_columns_new <- c("NonMalignant", "Residual_Classical", "Basal", "Active_Classical", "Mixed_Neither", "Mixed_Secretory_Hybrid")
+
+#binarize the data, and make a linear regression plot (like I did with lesion size!!!) 
+df_for_fe_binary <- df_for_fe_trim
+
+df_for_fe_binary$NonMalignant[df_for_fe_binary$NonMalignant < 0.5] <- 0
+df_for_fe_binary$NonMalignant[df_for_fe_binary$NonMalignant >= 0.5] <- 1
+
+df_for_fe_binary$Residual_Classical[df_for_fe_binary$Residual_Classical < 0.5] <- 0
+df_for_fe_binary$Residual_Classical[df_for_fe_binary$Residual_Classical >= 0.5] <- 1
+
+df_for_fe_binary$Basal[df_for_fe_binary$Basal < 0.5] <- 0
+df_for_fe_binary$Basal[df_for_fe_binary$Basal >= 0.5] <- 1
+
+df_for_fe_binary$Active_Classical[df_for_fe_binary$Active_Classical < 0.5] <- 0
+df_for_fe_binary$Active_Classical[df_for_fe_binary$Active_Classical >= 0.5] <- 1
+
+df_for_fe_binary$Mixed_Neither[df_for_fe_binary$Mixed_Neither < 0.5] <- 0
+df_for_fe_binary$Mixed_Neither[df_for_fe_binary$Mixed_Neither >= 0.5] <- 1
+
+df_for_fe_binary$Mixed_Secretory_Hybrid[df_for_fe_binary$Mixed_Secretory_Hybrid < 0.5] <- 0
+df_for_fe_binary$Mixed_Secretory_Hybrid[df_for_fe_binary$Mixed_Secretory_Hybrid >= 0.5] <- 1
+
+#make a category for any lesion that does not have a dominant grouping:
+df_for_fe_binary$MultiCategory_Lesions <- 0
+df_for_fe_binary$MultiCategory_Lesions[rowSums(df_for_fe_binary[epithelial_columns_new]) == 0] <- 1
+
+p_values_df <- data.frame(immune_type = character(), variable = character(), p_value = numeric(), estimate = numeric(), stringsAsFactors = FALSE)
+
+for(immune_type in immune_columns_clean){
+  
+  # Create the linear regression model
+  model <- lm(as.matrix(df_for_fe_binary[immune_type]) ~ NonMalignant + Residual_Classical + Basal + Active_Classical + Mixed_Neither + Mixed_Secretory_Hybrid + MultiCategory_Lesions, data = df_for_fe_binary)
+  
+  # Summarize the regression results
+  model_summary <- summary(model)
+  
+  # Extract the p-values
+  p_values <- tidy(model_summary)$p.value
+  variables <- tidy(model_summary)$term
+  estimate <- tidy(model_summary)$estimate
+  
+  # Store the p-values in the data frame
+  p_values_df <- rbind(p_values_df, data.frame(immune_type = immune_type, variable = variables, p_value = p_values, estimate = estimate))
+  
+  # Augment the model for plotting
+  model_aug <- model %>% augment() %>% as.data.frame()
+  
+  for(i in 1:6){
+    glm_plot <- ggplot(model_aug, aes(x = model_aug[,2], y = model_aug[,i+2])) +
+      geom_point() +
+      stat_smooth(method="glm", color="green", method.args = list(family=binomial)) +
+      ylab(label = tidy(model_summary)$term[i+1]) + #model_aug[,i+2]??
+      xlab(immune_type)
+    
+    # Save the plot as a PNG file
+    ggsave(plot = glm_plot, filename = paste("scaled_", immune_type, "_", tidy(model_summary)$term[i+1], "_logistic_regression.png", sep = ""))
+  }
+} #and THEN, I can use a permutation test on this logistic regression, and double check the p-values that way!
+
+#before correction, 143 / 341 associations have significant p-values (although that is including the intercept)
+p_values_df$p_value < 0.05
+p_values_df$p_value*341 < 0.05 #after correction, 51 have significant p-values
+
+#meaningful interactions:
+hits_lesion_level <- p_values_df[p_values_df$p_value*341 < 0.05,]
+hits_lesion_level <- hits_lesion_level[hits_lesion_level$variable != "(Intercept)",] #this leaves 24 hits. 85 hits here, when multicategory lesions are included
+
+
+#measure total immune influx, for each type of lesion
+
+nonmalignant <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$NonMalignant == 1]
+res_classical <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$Residual_Classical == 1]
+active_classical <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$Active_Classical == 1]
+basal <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$Basal == 1]
+mixed_n <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$Mixed_Neither == 1]
+mixed_sec <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$Mixed_Secretory_Hybrid == 1]
+multicat <- rowSums(df_for_fe_binary[immune_columns_clean])[df_for_fe_binary$MultiCategory_Lesions == 1]
+
+nonmalignant <- as.data.frame(nonmalignant)
+nonmalignant$lesion_type <- "nonmalignant"
+colnames(nonmalignant)<- c("immune_counts","lesion_type") 
+
+res_classical <- as.data.frame(res_classical)
+res_classical$lesion_type <- "res_classical"
+colnames(res_classical) <- c("immune_counts", "lesion_type")
+
+active_classical <- as.data.frame(active_classical)
+active_classical$lesion_type <- "active_classical"
+colnames(active_classical) <- c("immune_counts", "lesion_type")
+
+basal <- as.data.frame(basal)
+basal$lesion_type <- "basal"
+colnames(basal) <- c("immune_counts", "lesion_type")
+
+mixed_n <- as.data.frame(mixed_n)
+mixed_n$lesion_type <- "mixed_n"
+colnames(mixed_n) <- c("immune_counts", "lesion_type")
+
+mixed_sec <- as.data.frame(mixed_sec)
+mixed_sec$lesion_type <- "mixed_sec"
+colnames(mixed_sec) <- c("immune_counts", "lesion_type")
+
+multicat <- as.data.frame(multicat)
+multicat$lesion_type <- "multicat"
+colnames(multicat) <- c("immune_counts", "lesion_type")
+
+im_infil <- rbind(nonmalignant, res_classical, active_classical, basal, mixed_n, mixed_sec, multicat)
+
+#there are some outliers that are crazyyyy
+#let's exclude the 38 objects that have over 10k immune cells associated with them.
+
+im_influx <- im_infil[!im_infil$immune_counts > 10000,]
+#make a boxplot, the six types each as a box
+
+boxplot <- ggplot(im_influx, aes(x=lesion_type, y=immune_counts)) +
+  geom_boxplot()
+ggsave(plot = boxplot, filename = "total_immune_influx_around_different_epithelial_lesions_2.png")
+
+
+```
+
+
+What kind of statistics do I want?
+"pure basal lesions have 30% more B cells surrounding them than pure classical lesions"
+"mixed cell-type lesions have approximately %%% fewer T-cells around them"
+
+# Extra
+df_for_fe <- lesion_pheno_im_counts %>% 
+  pivot_wider(names_from = Merged_Immune_Labels, values_from = count) %>%
+  group_by(unique_object_label) %>%
+  summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>% 
+  ungroup()
+
+
+ 
+
+ungroup()
+  df_for_fe %>%
+  pivot_wider(names_from = Epithelial_Type, values_from = Epithelial_Count) %>%
+  group_by(unique_object_label) %>%
+  summarise(across(c("Fifth_Group", "First_Group","Fourth_Group","Second_Group","Sixth_Group","Third_Group")), sum, na.rm = TRUE)) %>%
+  ungroup()
+  
+```{stuff}
+# wide_df
+
+wide_df <- long_df %>%
+  pivot_wider(names_from = Epithelial_Type, values_from = Epithelial_Count) %>%
+  group_by(Merged_Immune_Labels) %>%
+  summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+  ungroup()
+
+
+model <- lmer(count ~ Epithelial_Count * Merged_Immune_Labels + (1 | Epithelial_Type), data = long_df)
+
+model <- lmer(count ~ Epithelial_Count + Merged_Immune_Labels + (1 |Epithelial_Type), data = long_df)
+summary(model)
+
+
+summary_df <- long_df %>%
+  group_by(Merged_Immune_Labels, Epithelial_Type) %>%
+  summarise(mean_immune_count = mean(count),
+            mean_epithelial_count = mean(Epithelial_Count))
+
+pdf("immune_by_epithelial_type.pdf", width = 11, height = 8)
+ggplot(summary_df, aes(x = mean_immune_count, y = mean_epithelial_count, color = Merged_Immune_Labels)) +
+  geom_point() +
+  facet_wrap(~ Epithelial_Type) +
+  labs(title = "Relationship between Immune Count and Epithelial Count",
+       x = "Mean Immune Count",
+       y = "Mean Epithelial Count") +
+  theme_minimal()
+dev.off()
+
+#calculate relationships: 
+
+#types of calculations to do: 
+#1. Compare 
+
+long_df
+
+
+
+# Step 2: Calculate correlations
+# Create a new dataframe with immune and epithelial counts in wide format
+wide_df <- long_df %>%
+  pivot_wider(names_from = Epithelial_Type, values_from = Epithelial_Count) %>%
+  group_by(Merged_Immune_Labels) %>%
+  summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+  ungroup()
+
+wide_twisted_df <- melt(wide_df[c(1,4:9)])
+
+#just make a basic barplot
+pdf("immune_by_epithelial_type.pdf", width = 11, height = 8)
+ggplot(wide_twisted_df, aes(x= , y= ,))
+
+wide_df_2 <- long_df %>%
+  pivot_wider(names_from = Epithelial_Type, values_from = Epithelial_Count) %>%
+  group_by(Merged_Immune_Labels,) %>%
+  summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+  ungroup()
+
+#I can make a basic summary plot with wide_df, but its probably better if I make boxplots 
+
+#let's make the summary plot first
+ggplot(wide_df, x = "Merged" )
+
+
+# Calculate the correlation matrix
+cor_matrix <- cor(wide_df[-1], use = "complete.obs")
+
+# Print the correlation matrix
+print(cor_matrix)
+
+# Alternatively, if you want pairwise correlations between each immune category and epithelial type
+library(psych)
+cor_results <- corr.test(wide_df[-1])
+print(cor_results)
+
+#library(data.table)
+#im_data$immune_object_id <- as.character(im_data$immune_object_id)
+#im_data <- left_join(im_data,immune_lesion_phenotypes, by= c("description","immune_object_id"), multiple="all")
+
+im_data$ im_data$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178"
+
+im_data_im_cells$Merged_Immune_Labels[im_data_im_cells$description == "PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178"]
+
+overlapped_objects_with_immune_nearby_sum$`immune_lesion_phenotypes_summed$unique_object_label[immune_lesion_phenotypes_summed$unique_object_label %in% nearby_immune_per_object$unique_object_label]`[overlapped_objects_with_immune_nearby_sum$image == "PDAC7_126",]
+
+
+#im_data, with its 4 million cells
+im_data$unique_object_label <- paste(im_data$image_id, im_data$immune_object_id, sep = "_")
+
+sum(im_data$unique_object_label == "PDAC7_126_199") #this object is missing even from the labels given to im_data
+
+this_image <- im_data[im_data$image_id == "PDAC7_126",]
+summary(as.factor(this_image$unique_object_label))
+
+#the highest recorded object is 118... but that's only HALF of the objects available.
+
+```
+
+for a loop that runs for every unique value of immune_object_id, take every cell that belongs to each immune_object_id, and find all its unique_neighbour_ids in combined_df. THEN, take all the unique_neighbour_ids, and find what their immune label is. 
+
+immune_lesion_phenotypes[!immune_lesion_phenotypes$unique_object_label %in% im_data_ep_cells$unique_object_label,]
+
+
+summary(as.factor(immune_lesion_phenotypes$image_id[!immune_lesion_phenotypes$unique_object_label %in% im_data_ep_cells$unique_object_label]))
+
+
+^examples of images where the object labels where object labels totally fail
+
+
+
+```{whatever}
+#example images with high amounts of object mismatch
+summary(as.factor(immune_lesion_phenotypes$image_id[!immune_lesion_phenotypes$unique_object_label %in% im_data_ep_cells$unique_object_label]))
+
+im_data[im_data$image_id == "PDAC3_83",]
+PDAC7_126 
+
+ep_data[ep_data$description=="PDAC7_Sector1Row5Column2_Punch1_Case205_ID_1_99178",]
+
+PDAC3_Sector2Row1Column6_Punch2_Case85_ID_G_25488
+
+
+im_data$
+
+#5_12
+ep_data[ep_data$description=="PDAC5_Sector2Row3Column3_Punch3_Case155_ID_GSDM_567",] #48 images missing
+
+PDAC5_Sector2Row3Column3_Punch3_Case155_ID_GSDM_567
+
+
+```{check genomics}
+
+#check
+
+metadata <- read.csv("~/Downloads/metadata_full.csv")
+
+tma <- read_tsv("~/Downloads/2022_PDAC_TMA_PCSI_ID_RNAnames_1.tsv")
+
+tma$PCSI_ID <- gsub("_","", tma$PCSI_ID)
+
+in_mmc1_and_tma <- tma$PCSI_ID[tma$PCSI_ID %in% pcsi_vector] #I have data from 87 patients (from mmc1.xclx)
+
+in_metadata_and_tma <- tma$PCSI_ID[tma$PCSI_ID %in% metadata$donor.x]  #here I have 94
+
+in_metadata_and_tma %in% in_mmc1_and_tma #83 overlap between these two
+
+pcsi_vector <- c("PCSI0004", "PCSI0019", "PCSI0023", "PCSI0044", "PCSI0046", "PCSI0047", "PCSI0072", 
+  "PCSI0073", "PCSI0074", "PCSI0077", "PCSI0078", "PCSI0080", "PCSI0081", "PCSI0082", "PCSI0084", 
+  "PCSI0085", "PCSI0096", "PCSI0098", "PCSI0099", "PCSI0101", "PCSI0102", "PCSI0104", "PCSI0105", 
+  "PCSI0107", "PCSI0108", "PCSI0109", "PCSI0111", "PCSI0132", "PCSI0146", "PCSI0162", "PCSI0164", 
+  "PCSI0169", "PCSI0170", "PCSI0171", "PCSI0173", "PCSI0174", "PCSI0175", "PCSI0208", "PCSI0210", 
+  "PCSI0216", "PCSI0217", "PCSI0226", "PCSI0227", "PCSI0228", "PCSI0230", "PCSI0233", "PCSI0235", 
+  "PCSI0236", "PCSI0237", "PCSI0239", "PCSI0240", "PCSI0263", "PCSI0264", "PCSI0268", "PCSI0269", 
+  "PCSI0274", "PCSI0279", "PCSI0281", "PCSI0283", "PCSI0287", "PCSI0290", "PCSI0294", "PCSI0295", 
+  "PCSI0297", "PCSI0300", "PCSI0301", "PCSI0302", "PCSI0303", "PCSI0305", "PCSI0307", "PCSI0309", 
+  "PCSI0311", "PCSI0312", "PCSI0326", "PCSI0328", "PCSI0329", "PCSI0330", "PCSI0334", "PCSI0337", 
+  "PCSI0339", "PCSI0340", "PCSI0343", "PCSI0344", "PCSI0345", "PCSI0347", "PCSI0348", "PCSI0350", 
+  "PCSI0351", "PCSI0352", "PCSI0353", "PCSI0354", "PCSI0355", "PCSI0356", "PCSI0357", "PCSI0358", 
+  "PCSI0375", "PCSI0384", "PCSI0392", "PCSI0402", "PCSI0403", "PCSI0413", "PCSI0449", "PCSI0450", 
+  "PCSI0451", "PCSI0454", "PCSI0456", "PCSI0457", "PCSI0458", "PCSI0460", "PCSI0463", "PCSI0465", 
+  "PCSI0466", "PCSI0467", "PCSI0468", "PCSI0469", "PCSI0473", "PCSI0504", "PCSI0509", "PCSI0511", 
+  "PCSI0518", "PCSI0521", "PCSI0527", "PCSI0528", "PCSI0529", "PCSI0531", "PCSI0534", "PCSI0537", 
+  "PCSI0549", "PCSI0572", "PCSI0588", "PCSI0589", "PCSI0590", "PCSI0591", "PCSI0592", "PCSI0593", 
+  "PCSI0594", "PCSI0602", "PCSI0608", "PCSI0609", "PCSI0610", "PCSI0611", "PCSI0613", "PCSI0616", 
+  "PCSI0623", "PCSI0624", "PCSI0625", "PCSI0626", "PCSI0627", "PCSI0628", "PCSI0629", "PCSI0633", 
+  "PCSI0638", "PCSI0639", "PCSI0642", "PCSI0643", "PCSI0645", "PCSI0649", "PCSI0653", "PCSI0655", 
+  "PCSI0676", "PCSI0890", "PCSI0630", "PCSI0632", "PCSI0634", "PCSI0637", "PCSI0640", "PCSI0641", 
+  "PCSI0644", "PCSI0647", "PCSI0646", "PCSI0648", "PCSI0650", "PCSI0651", "PCSI0660", "PCSI0661", 
+  "PCSI0662", "PCSI0663", "PCSI0664", "PCSI0665", "PCSI0667", "PCSI0669", "PCSI0670", "PCSI0674", 
+  "PCSI0673", "PCSI0675", "PCSI0678", "PCSI0679", "PCSI0680", "PCSI0685", "PCSI0687", "PCSI0690", 
+  "PCSI0691", "PCSI0692", "PCSI0693", "PCSI0695", "PCSI0697", "PCSI0698", "PCSI0700", "PCSI0699", 
+  "PCSI0701", "PCSI0704", "PCSI0709", "PCSI0711", "PCSI0713", "PCSI0712", "PCSI0714", "PCSI0720", 
+  "PCSI0717", "PCSI0718", "PCSI0719", "PCSI0722", "PCSI0723", "PCSI0724", "PCSI0725", "PCSI0726", 
+  "PCSI0728", "PCSI0727", "PCSI0731", "PCSI0730", "PCSI0732", "PCSI0733", "PCSI0734", "PCSI0736", 
+  "PCSI0738", "PCSI0742", "PCSI0741", "PCSI0740", "PCSI0739", "PCSI0744", "PCSI0743", "PCSI0757", 
+  "PCSI0746", "PCSI0747", "PCSI0748", "PCSI0749", "PCSI0754", "PCSI0753", "PCSI0756", "PCSI0760", 
+  "PCSI0761", "PCSI0762", "PCSI0764", "PCSI0763", "PCSI0765", "PCSI0767", "PCSI0768", "PCSI0769", 
+  "PCSI0770", "PCSI0771", "PCSI0772", "PCSI0774", "PCSI0775", "PCSI0776", "PCSI0777", "PCSI0778", 
+  "PCSI0782", "PCSI0783", "PCSI0784", "PCSI0785", "PCSI0795", "PCSI0796", "PCSI0794", "PCSI0800", 
+  "PCSI0798", "PCSI0799", "PCSI0801", "PCSI0806", "PCSI0813", "PCSI0815", "PCSI0812", "PCSI0814", 
+  "PCSI0816", "PCSI0817", "PCSI0818", "PCSI0935", "PCSI0934", "PCSI0937", "PCSI0939", "PCSI0941", 
+  "PCSI0943", "PCSI0942", "PCSI0944", "PCSI0956", "PCSI0968", "PCSI0976", "PCSI0977", "PCSI0978", 
+  "PCSI0979", "PCSI0980", "PCSI0987", "PCSI0989", "PCSI0990", "PCSI0991", "PCSI0995", "PCSI0993", 
+  "PCSI0996", "PCSI0998", "PCSI1004", "PCSI0999", "PCSI1002", "PCSI1003", "PCSI1005", "PCSI1007", 
+  "PCSI1008", "PCSI1010", "PCSI1012", "PCSI1013", "PCSI1014", "PCSI1016", "PCSI1019", "PCSI1020", 
+  "PCSI1021", "PCSI1023", "PCSI1027", "PCSI1026", "PCSI1035", "PCSI1051", "PCSI1036", "PCSI1038", 
+  "PCSI1056", "PCSI1057", "PCSI1059", "PCSI1058", "PCSI1060", "PCSI1061", "PCSI1067", "PCSI1063", "PCSI1065", 
+  "PCSI1066", "PCSI1070", "PCSI0475", "PCSI0015", "PCSI0218", "PCSI0677", "PCSI0492", 
+  "PCSI0261", "PCSI0310", "PCSI0802", "PCSI0789", "PCSI0472", "PCSI0792", "PCSI0710", 
+  "PCSI0453", "PCSI0142", "PCSI0048", "PCSI0017", "PCSI0292", "PCSI0477", "PCSI0075", 
+  "PCSI0706", "PCSI0716", "PCSI0387", "PCSI0378", "PCSI0547", "PCSI0703", "PCSI0793", 
+  "PCSI0735", "PCSI0490", "PCSI0476", "PCSI0621", "PCSI0176", "PCSI0681", "PCSI0657", 
+  "PCSI0658", "PCSI0788", "PCSI0607", "PCSI0787", "PCSI0689", "PCSI0759", "PCSI0786", 
+  "PCSI0984", "PCSI0721", "PCSI0936", "PCSI0781", "PCSI0779", "PCSI0683", "PCSI1011", 
+  "PCSI1015", "PCSI1017", "PCSI1062", "PCSI1068", "PCSI1071", "PCSI1028", "PCSI1030", 
+  "PCSI1032", "PCSI1034", "PCSI0600", "PCSI0707", "PCSI0694", "PCSI0708", "PCSI0688")
+
+
+# Set the path to the target directory
+target_dir <- "~/Downloads/mounts"
+
+# Recursively list all directories
+all_dirs <- list.dirs(target_dir, recursive = TRUE, full.names = TRUE)
+
+# Filter directories to include only those with "PCSI" in their names
+pcsi_dirs <- all_dirs[grepl("PCSI_", basename(all_dirs))]
+
+pcsi_dirs <- gsub("/Users/ferris/Downloads/mounts/labs/PCSI/pipeline/hg38/", "", pcsi_dirs)
+pcsi_dirs <- gsub("(.*)/(.*)", "\\2", pcsi_dirs)
+
+pcsi_dirs
+
+tma$RNAName %in% pcsi_dirs
+
+```

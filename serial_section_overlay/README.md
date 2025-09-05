@@ -15,7 +15,7 @@ Aligning across serial sections:
 
 For more granular cross-serial section anaysis:
 1. Spatially align the single cell data in the rds/csv files from separate sections by applying the learned transformation to the x/y coordinates of each cell in a given image's csv.
-2. Sanity check by visualizing the which cell IDs are within a small radius of a certain pixel across segmented cell masks.
+2. Sanity check by visualizing the which cell IDs are within a small radius (21px, euclidean distance) of certain randomly selected pixels across segmented cell masks (pictured above).
 
 
 Data:
