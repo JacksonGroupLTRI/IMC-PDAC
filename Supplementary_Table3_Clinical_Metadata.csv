@@ -1,0 +1,225 @@
+﻿ID,Sex,Vital_Status,Age_at_Dx,Surgery,PathologicalStagingLymphNodesN,Stage,Neoadjuvant_Treatment,Type_of_Neoadjuvant_Chemo_if_applicable,Adjuvant_Treatment,Followup_DiseaseStatus,event,OS_from_dx,CaseID
+PCSI_0004,F,Deceased,42,Total Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,877,Case82
+PCSI_0015,F,Deceased,45,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,1576,Case97
+PCSI_0018,F,Deceased,76,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,781,Case208
+PCSI_0019,M,Deceased,63,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1499,Case104
+PCSI_0043,F,Deceased,66,Whipple,N0 No Regional lymph nodes metastasis,IA,Chemorads,"Gemcitabine, Oxaliplatin",None,Dead of Pancreatic Cancer (DOD),1,1720,Case152
+PCSI_0072,M,Deceased,82,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,362,Case102
+PCSI_0073,M,Alive,68,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,3565,Case165
+PCSI_0074,F,Deceased,52,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Unknown,Dead of Unknown Cause (DUC),1,263,Case164
+PCSI_0076,M,Deceased,67,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1003,Case108
+PCSI_0078,F,Deceased,55,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemorads,Gemcitabine,None,Dead of Unknown Cause (DUC),1,280,Case160
+PCSI_0079,M,Deceased,66,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,618,Case111
+PCSI_0080,M,Deceased,70,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,746,Case161
+PCSI_0081,M,Deceased,53,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1234,Case212
+PCSI_0082,F,Deceased,83,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,361,Case112
+PCSI_0083,F,Alive,53,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemorads,Alive with No Evidence of Pancreatic Cancer (NED),0,2662,Case113
+PCSI_0084,F,Deceased,70,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,463,Case76
+PCSI_0085,F,Deceased,54,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,1262,Case230
+PCSI_0086,M,Deceased,69,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IV,None,,None,Dead of Pancreatic Cancer (DOD),1,90,Case115
+PCSI_0087,M,Deceased,72,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1928,Case118
+PCSI_0096,M,Alive,65,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,2768,Case154
+PCSI_0098,M,Deceased,75,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Other Cause (DOC) - poor functional status,1,102,Case166
+PCSI_0099,F,Alive,76,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Alive with Cancer,0,4212,Case110
+PCSI_0102,F,Deceased,50,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,627,Case114
+PCSI_0103,F,Alive,68,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1264,Case119
+PCSI_0104,F,Alive,61,Total Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,4217,Case217
+PCSI_0105,F,Deceased,58,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,2575,Case121
+PCSI_0107,M,Deceased,60,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1084,Case120
+PCSI_0108,M,Deceased,63,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1359,Case122
+PCSI_0111,M,Deceased,68,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,371,Case156
+PCSI_0132,F,Deceased,63,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,1072,Case126
+PCSI_0141,M,Deceased,58,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,472,Case116
+PCSI_0142,M,Deceased,43,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,287,Case123
+PCSI_0143,M,Deceased,62,Subtotal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,511,Case125
+PCSI_0144,M,Alive,61,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Unknown,Alive with No Evidence of Pancreatic Cancer (NED),0,146,Case155
+PCSI_0145,F,Alive,60,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,4088,Case128
+PCSI_0161,F,Deceased,80,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,314,Case130
+PCSI_0162,F,Deceased,67,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,494,Case131
+PCSI_0164,M,Deceased,58,Whipple,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1448,Case73
+PCSI_0165,F,Deceased,46,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,671,Case158
+PCSI_0167,M,Alive,69,Whipple,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,4200,Case218
+PCSI_0168,F,Deceased,71,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,2299,Case214
+PCSI_0170,F,Deceased,63,Whipple,N0 No Regional lymph nodes metastasis,IA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1460,Case159
+PCSI_0171,F,Deceased,76,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,1431,Case162
+PCSI_0175,F,Deceased,51,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,444,Case129
+PCSI_0177,M,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,824,Case132
+PCSI_0206,M,Deceased,39,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,469,Case135
+PCSI_0207,F,Deceased,61,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,289,Case78
+PCSI_0208,F,Deceased,74,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,315,Case137
+PCSI_0209,F,Deceased,73,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,535,Case222
+PCSI_0210,F,Deceased,76,Whipple,N1a Metastasis in single regional lymph node,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,361,Case136
+PCSI_0211,M,Deceased,78,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,500,Case93
+PCSI_0216,M,Deceased,60,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,819,Case109
+PCSI_0218,M,Deceased,50,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,681,Case134
+PCSI_0220,M,Deceased,63,Whipple,N1a Metastasis in single regional lymph node,IV,Chemorads,Gemcitabine,Chemo,Dead of Pancreatic Cancer (DOD),1,2451,Case220
+PCSI_0224,M,Deceased,64,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1743,Case221
+PCSI_0225,M,Deceased,60,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,1537,Case138
+PCSI_0227,M,Deceased,61,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,1191,Case224
+PCSI_0228,F,Deceased,64,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,351,Case140
+PCSI_0230,M,Deceased,69,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Erlotinib, Gemcitabine",Chemorads,Dead of Pancreatic Cancer (DOD),1,311,Case145
+PCSI_0292,M,Alive,63,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,3243,Case103
+PCSI_0294,F,Deceased,50,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,201,Case143
+PCSI_0296,F,Deceased,68,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,474,Case139
+PCSI_0297,F,Deceased,86,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Unknown Cause (DUC),1,349,Case142
+PCSI_0298,F,Deceased,60,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,915,Case141
+PCSI_0300,F,Deceased,65,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,590,Case209
+PCSI_0301,M,Deceased,84,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,341,Case146
+PCSI_0347,M,Deceased,57,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1686,Case144
+PCSI_0348,F,Alive,60,Whipple,N1a Metastasis in single regional lymph node,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Alive with Cancer,0,3925,Case226
+PCSI_0349,M,Deceased,52,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1577,Case95
+PCSI_0351,M,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1361,Case150
+PCSI_0352,F,Deceased,74,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,294,Case151
+PCSI_0353,F,Alive,53,Whipple,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,3594,Case210
+PCSI_0354,F,Deceased,70,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Other Cause (DOC) - progressive decline,1,197,Case228
+PCSI_0359,F,Deceased,71,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,396,Case227
+PCSI_0360,F,Deceased,71,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,482,Case149
+PCSI_0383,M,Deceased,78,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,573,Case206
+PCSI_0384,M,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,578,Case23
+PCSI_0385,F,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,320,Case79
+PCSI_0390,M,Deceased,73,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,318,Case77
+PCSI_0391,F,Deceased,83,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,1248,Case74
+PCSI_0392,F,Deceased,66,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,129,Case11
+PCSI_0402,M,Deceased,74,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,628,Case22
+PCSI_0403,M,Deceased,81,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Unknown Cause (DUC),1,2428,Case174
+PCSI_0410,M,Deceased,73,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,574,Case148
+PCSI_0448,M,Deceased,59,Total Pancreatectomy,N1a Metastasis in single regional lymph node,III,Chemorads,Gemcitabine,Chemo,Dead of Pancreatic Cancer (DOD),1,592,Case100
+PCSI_0449,M,Deceased,65,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,903,Case26
+PCSI_0450,F,Deceased,40,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemorads,Gemcitabine,Chemo,Dead of Pancreatic Cancer (DOD),1,294,Case27
+PCSI_0453,F,Deceased,67,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,688,Case207
+PCSI_0458,M,Deceased,82,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1493,Case98
+PCSI_0463,M,Deceased,38,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,690,Case94
+PCSI_0465,M,Alive,73,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Alive with No Evidence of Pancreatic Cancer (NED),0,1799,Case90
+PCSI_0467,F,Deceased,58,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1824,Case117
+PCSI_0468,M,Deceased,79,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Unknown Cause (DUC),1,3826,Case229
+PCSI_0469,F,Deceased,70,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,313,Case219
+PCSI_0472,M,Deceased,75,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Other Cause (DOC) - post-op death,1,195,Case223
+PCSI_0549,M,Deceased,76,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Unknown Cause (DUC),1,1074,Case92
+PCSI_0588,M,Deceased,78,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,239,Case169
+PCSI_0590,M,Deceased,73,Total Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,437,Case171
+PCSI_0592,F,Deceased,63,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,234,Case170
+PCSI_0593,M,Deceased,62,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,271,Case211
+PCSI_0594,M,Deceased,63,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,684,Case21
+PCSI_0602,M,Deceased,55,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,456,Case20
+PCSI_0608,F,Deceased,52,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,165,Case15
+PCSI_0610,F,Deceased,62,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Unknown Cause (DUC),1,311,Case175
+PCSI_0611,M,Deceased,58,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,306,Case176
+PCSI_0613,M,Deceased,48,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,324,Case24
+PCSI_0626,F,Deceased,59,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,Chemorads,Gemcitabine,None,Dead of Pancreatic Cancer (DOD),1,389,Case31
+PCSI_0627,M,Deceased,79,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1620,Case180
+PCSI_0629,F,Deceased,74,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,745,Case178
+PCSI_0633,F,Deceased,59,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,170,Case183
+PCSI_0636,M,Deceased,73,Total Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,990,Case105
+PCSI_0639,F,Deceased,66,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,531,Case16
+PCSI_0642,M,Deceased,58,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,681,Case173
+PCSI_0645,M,Deceased,79,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1012,Case29
+PCSI_0652,F,Deceased,64,Whipple,N1a Metastasis in single regional lymph node,IIB,Chemorads,Gemcitabine,None,Dead of Pancreatic Cancer (DOD),1,1826,Case172
+PCSI_0653,M,Deceased,76,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,482,Case18
+PCSI_0676,M,Deceased,65,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,772,Case17
+PCSI_0677,F,Alive,68,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with Cancer,0,2441,Case188
+PCSI_0683,F,Deceased,65,Whipple and Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,Chemo,Folfirinox,Chemo,Dead of Pancreatic Cancer (DOD),1,494,Case46
+PCSI_0710,F,Deceased,57,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1006,Case195
+PCSI_0729,M,Deceased,56,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,273,Case194
+PCSI_0772,F,Deceased,65,Whipple,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,Chemo,Folfirinox,Chemo and then Chemorads,Dead of Pancreatic Cancer (DOD),1,808,Case63
+PCSI_0780,M,Deceased,66,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,88,Case200
+PCSI_0807,M,Deceased,81,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,827,Case189
+PCSI_0808,M,Deceased,85,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Other Cause (DOC) - Cardiorespiratory arrest; massive aspiration event,1,164,Case190
+PCSI_0809,M,Deceased,73,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,281,Case191
+PCSI_0810,M,Deceased,81,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,334,Case192
+PCSI_0811,M,Deceased,67,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,662,Case193
+PCSI_0821,F,Deceased,53,Total Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,Chemorads,Capecitabine,None,Dead of Pancreatic Cancer (DOD),1,595,Case10
+PCSI_0822,F,Deceased,69,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,782,Case13
+PCSI_0826,F,Alive,72,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with Cancer,0,2687,Case33
+PCSI_0827,M,Deceased,59,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads then Chemo,Dead of Pancreatic Cancer (DOD),1,569,Case35
+PCSI_0831,F,Deceased,44,Whipple,N1a Metastasis in single regional lymph node,IIB,Chemo,"Erlotinib, Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,918,Case215
+PCSI_0835,M,Alive,74,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with Cancer,0,354,Case168
+PCSI_0836,M,Deceased,70,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,579,Case9
+PCSI_0841,F,Deceased,69,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,298,Case14
+PCSI_0848,M,Alive,51,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,2926,Case19
+PCSI_0851,F,Deceased,73,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,"Gemcitabine, Abraxane",None,Dead of Pancreatic Cancer (DOD),1,468,Case25
+PCSI_0852,M,Deceased,74,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,925,Case179
+PCSI_0853,F,Deceased,67,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,633,Case28
+PCSI_0856,M,Deceased,67,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None (R2 rsxn),Dead of Pancreatic Cancer (DOD),1,302,Case30
+PCSI_0857,M,Deceased,79,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,2485,Case181
+PCSI_0858,F,Deceased,70,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,146,Case32
+PCSI_0859,M,Deceased,59,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1079,Case34
+PCSI_0860,F,Deceased,79,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,774,Case184
+PCSI_0861,F,Deceased,76,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,404,Case185
+PCSI_0863,M,Deceased,51,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Unknown Cause (DUC),1,363,Case186
+PCSI_0864,M,Deceased,84,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,859,Case36
+PCSI_0865,F,Alive,79,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,2314,Case37
+PCSI_0867,M,Deceased,61,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,"Dead of Other Cause (DOC) - multifactorial - neurological, sepsis, cardiac",1,1194,Case39
+PCSI_0869,F,Deceased,63,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1407,Case40
+PCSI_0870,F,Deceased,73,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,575,Case41
+PCSI_0872,M,Deceased,61,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,323,Case42
+PCSI_0873,M,Deceased,81,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,280,Case43
+PCSI_0875,F,Deceased,60,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,781,Case45
+PCSI_0877,M,Deceased,62,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,482,Case187
+PCSI_0879,F,Deceased,70,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1571,Case47
+PCSI_0880,M,Deceased,61,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,259,Case48
+PCSI_0882,F,Alive,64,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with Cancer,0,2394,Case49
+PCSI_0888,F,Alive,65,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1946,Case52
+PCSI_0889,F,Deceased,77,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,526,Case53
+PCSI_0890,F,Deceased,72,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,816,Case12
+PCSI_0894,F,Deceased,75,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemorads,Dead of Unknown Cause (DUC),1,275,Case71
+PCSI_0895,M,Deceased,59,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1628,Case72
+PCSI_0896,M,Deceased,84,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,754,Case75
+PCSI_0898,M,Deceased,67,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,527,Case80
+PCSI_0899,M,Deceased,71,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,180,Case81
+PCSI_0901,F,Deceased,75,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,542,Case83
+PCSI_0903,F,Deceased,69,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,412,Case84
+PCSI_0904,M,Deceased,55,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,682,Case85
+PCSI_0905,M,Deceased,75,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,None,Dead of Pancreatic Cancer (DOD),1,1386,Case86
+PCSI_0907,F,Alive,62,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1133,Case87
+PCSI_0909,F,Deceased,69,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,669,Case88
+PCSI_0910,F,Deceased,61,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemorads,Dead of Pancreatic Cancer (DOD),1,462,Case89
+PCSI_0911,F,Deceased,57,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,928,Case91
+PCSI_0914,F,Deceased,65,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1612,Case96
+PCSI_0915,F,Alive,64,Distal Pancreatectomy,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,886,Case99
+PCSI_0916,M,Deceased,75,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,402,Case101
+PCSI_0919,M,Deceased,61,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,325,Case106
+PCSI_0920,M,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1105,Case213
+PCSI_0922,M,Deceased,46,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,398,Case124
+PCSI_0923,F,Deceased,75,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,971,Case127
+PCSI_0927,M,Deceased,64,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,676,Case147
+PCSI_0928,F,Deceased,80,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,542,Case153
+PCSI_0931,F,Deceased,45,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,779,Case157
+PCSI_0933,F,Alive,79,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,2058,Case163
+PCSI_0997,M,Alive,59,Whipple,N0 No Regional lymph nodes metastasis,IIA,Chemo and then Chemorads,Folfirinox-Gemcitabine,None,Alive with Cancer,0,2289,Case57
+PCSI_1009,M,Deceased,70,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,344,Case66
+PCSI_1036,M,Alive,42,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,Chemo and chemorads,Folfirinox-Gemcitabine,None,Alive with Cancer,0,1547,Case3
+PCSI_1054,M,Deceased,70,Distal Pancreatectomy,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,622,Case69
+PCSI_1055,F,Deceased,81,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,1138,Case50
+PCSI_1080,F,Alive,59,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Alive with Cancer,0,498,Case198
+PCSI_1082,F,Deceased,68,Distal Pancreatectomy,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,517,Case56
+PCSI_1083,F,Deceased,57,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,347,Case199
+PCSI_1085,F,Alive,75,Total Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1963,Case59
+PCSI_0866,F,Deceased,50,Whipple,N1b Metastasis in multiple regional lymph nodes,III,Chemo,Folfirinox,None,Dead of Unknown Cause (DUC),1,NA,Case38
+PCSI_1087,F,Deceased,60,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IIA,Chemo,Folfirinox,Chemo,Dead of Pancreatic Cancer (DOD),1,758,Case60
+PCSI_1088,M,Alive,63,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1352,Case61
+PCSI_1089,F,Deceased,62,Whipple,N0 No Regional lymph nodes metastasis,III,Chemo,Folfirinox,Chemo,Dead of Pancreatic Cancer (DOD),1,443,Case62
+PCSI_1090,F,Deceased,59,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,856,Case204
+PCSI_1091,F,Deceased,83,Whipple,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,175,Case67
+PCSI_1111,M,Deceased,57,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,736,Case55
+PCSI_1113,F,Deceased,78,Distal Pancreatectomy,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1010,Case65
+PCSI_1117,F,Deceased,82,Whipple,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,None,Dead of Pancreatic Cancer (DOD),1,1492,Case201
+PCSI_1118,F,Deceased,65,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1537,Case202
+PCSI_1119,F,Alive,63,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo and then chemorads,Alive with No Evidence of Pancreatic Cancer (NED),0,1218,Case203
+PCSI_1122,M,Alive,80,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1659,Case70
+PCSI_1128,F,Alive,64,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1393,Case51
+PCSI_1129,M,Deceased,65,Whipple,N0 No Regional lymph nodes metastasis,IIA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,551,Case196
+PCSI_1130,F,Deceased,65,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1137,Case197
+PCSI_1133,M,Deceased,66,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,Chemo,Folfirinox,Chemo,Dead of Other Cause (DOC) - end stage heart failure (CHF),1,683,Case54
+PCSI_1134,F,Alive,70,Whipple,N1a Metastasis in single regional lymph node,IIB,None,,Chemo,Alive with Cancer,0,2016,Case58
+PCSI_1135,M,Alive,56,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1756,Case68
+PCSI_1136,F,Deceased,71,Whipple,N0 No Regional lymph nodes metastasis,IA,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,1338,Case64
+PCSI_1137,M,Deceased,77,Whipple,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,None,,None,Dead of Pancreatic Cancer (DOD),1,432,Case205
+PCSI_1138,F,Alive,75,Distal Pancreatectomy,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,Chemo,Alive with Cancer,0,466,Case1
+PCSI_1139,F,Deceased,68,Whipple,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,742,Case2
+PCSI_1148,F,Deceased,56,None,n/a,IV,n/a,,n/a,Dead of Pancreatic Cancer (DOD),1,593,Case6
+PCSI_1162,F,Deceased,61,Distal Pancreatectomy,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,280,Case4
+PCSI_1165,M,Alive,35,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IB,None,,Chemo,Alive with Cancer,0,1432,Case167
+PCSI_1166,F,Deceased,59,Whipple,N1b Metastasis in multiple regional lymph nodes,IIB,None,,Chemo,Dead of Pancreatic Cancer (DOD),1,3441,Case107
+PCSI_1169,F,Deceased,48,Total Pancreatectomy,N2 (Metastasis in = 4 regional lymph nodes ‚Äì AJCC 8th edition),III,Chemo and then Chemorads,"Gemcitabine, Abraxane-Gemcitabine",Chemo,Dead of Pancreatic Cancer (DOD),1,1333,Case5
+PCSI_1181,M,Alive,51,Whipple,N1 (metastasis in 1‚Äì3 regional lymph nodes ‚Äì AJCC 8th edition),IIB,None,,Chemo and then Chemorads,Alive with No Evidence of Pancreatic Cancer (NED),0,1251,Case7
+PCSI_1205,F,Alive,34,Distal Pancreatectomy,N0 No Regional lymph nodes metastasis,IA,None,,Chemo,Alive with No Evidence of Pancreatic Cancer (NED),0,1220,Case8

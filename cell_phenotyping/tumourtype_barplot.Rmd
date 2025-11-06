@@ -1,0 +1,368 @@
+---
+title: "tumourtype_barplot"
+output: html_document
+date: "2025-11-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{make barplot of tumour cell proportions per patient, ordered by tumour type}
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+TMA_ep_df <- read.csv("/Users/ferris/Desktop/IMC-PDAC/000_data/ProcessedSingleCellData/IMC_epithelial_data_annotated_and_filtered_25July2025.csv")
+
+#remove exocrine, as it is not a tumour type
+TMA_ep_df <-  TMA_ep_df[!TMA_ep_df$Epithelial_Cell_Annotations == "Exocrine",]
+
+result <- TMA_ep_df %>%
+  group_by(CaseID, Epithelial_Cell_Annotations) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  arrange(CaseID, desc(count)) %>%
+  group_by(CaseID) %>%
+  dplyr::slice(1)
+
+#create ep_summary using TMA_ep_df_no_original_exocrine
+ep_summary <- TMA_ep_df %>%
+  group_by(CaseID, Epithelial_Cell_Annotations) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(CaseID) %>%
+  mutate(proportion = count / sum(count))  # Normalize counts to proportions
+
+
+custom_colors <- c("darkred", "#C04E01",  "#673A87", "darkgreen", "blue", "navy") #"white", "beige",
+
+
+ep_summary$Epithelial_Cell_Annotations <- factor(ep_summary$Epithelial_Cell_Annotations, levels = c("Basal", "S100A4+ Non-Basal", "Hybrid", "Non-polarized",  "TFlow_Classical","TFhigh_Classical" ))
+
+result$Epithelial_Cell_Annotations <- factor(result$Epithelial_Cell_Annotations, levels = c("Basal", "S100A4+ Non-Basal", "Hybrid", "Non-polarized",  "TFlow_Classical","TFhigh_Classical" ))
+
+
+#order by dominant type using data subset instead!! data_subset
+ep_summary$CaseID <- factor(ep_summary$CaseID, levels =  result$CaseID[order(result$Epithelial_Cell_Annotations)])
+
+
+
+# Create the stacked bar plot
+ok <- ggplot(ep_summary, aes(x = CaseID, y = proportion, fill = Epithelial_Cell_Annotations)) +
+  geom_bar(stat = "identity", position = "stack", colour = NA) +
+  labs(x = "Case ID", y = "Proportion of Epithelial Cells", fill = "Epithelial_Cell_Annotations") +
+  scale_y_continuous(labels = scales::percent_format()) +  # Format y-axis as percentages
+  scale_fill_manual(values = custom_colors) +  # Apply custom colors
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size =7))
+ggsave("barplot_of_new_annotations_ordered_by_new_tumour_type_patient_level_ordered3.png", plot = ok, height = 8, width =20, units = "in", dpi =300)
+
+ggsave("barplot_of_new_annotations_ordered_by_new_tumour_type_ordered.svg", plot = ok, height = 8, width =20, units = "in", dpi =300)
+
+
+```
+
+# create annotation tracks for neoadjuvant treatment, sex, lymph node status, ploidy, age
+```{create annotation tracks for epithelial tumour types}
+#add pretty annotation tracks for sex, neoadjuvant treatment, and dominant tumour type per core
+#clinical <- read.csv("/Users/ferris/Downloads/December2024_clean_clinical_with_CaseIDs.csv")
+clinical <- read.csv("/Users/ferris/Desktop/IMC-PDAC/000_data/Metadata/Supplementary_Table3_Clinical_Metadata.csv")
+
+TMA_ep_df <- read.csv("/Users/ferris/Desktop/IMC-PDAC/000_data/ProcessedSingleCellData/IMC_epithelial_data_annotated_and_filtered_25July2025.csv")
+
+epdom <- TMA_ep_df[c("CaseID","PCSI_ID", "dominant_Epithelial_Cell_Annotations_withoutEx")]
+epdom <- unique(epdom)
+
+clinical_sum <- clinical[c("CaseID", "ID","Neoadjuvant_Treatment","Sex","PathologicalStagingLymphNodesN")]
+clinical_sum$Neoadjuvant_Binary <- 0
+clinical_sum$Neoadjuvant_Binary[clinical_sum$Neoadjuvant_Treatment %in% c("Chemorads","Chemo","Chemo and then Chemorads","Chemo and chemorads")] <- 1
+
+clinical_sum$lymph_binary <- NA 
+clinical_sum$lymph_binary[clinical_sum$PathologicalStagingLymphNodesN %in% "N0 No Regional lymph nodes metastasis"] <- "Negative"
+clinical_sum$lymph_binary[clinical_sum$PathologicalStagingLymphNodesN %in% c("N1a Metastasis in single regional lymph node",
+                                                                                 "N1 (metastasis in 1–3 regional lymph nodes – AJCC 8th edition)", "N1b Metastasis in multiple regional lymph nodes", "N2 (Metastasis in = 4 regional lymph nodes – AJCC 8th edition)")] <- "Positive"
+
+#add pretty annotation tracks for sex, neoadjuvant treatment, and dominant tumour type per core
+clinical_omics <- read.csv("/Users/ferris/Desktop/IMC-PDAC/000_data/Metadata//June2025_clean_clinical_with_CaseIDs_and_omics_ready_for_milo.csv")[-1]
+
+#cna <- read.csv("/Users/ferris/Desktop/Stabl Clinical/2025May15_stabl_trainingdata/gistic_cna_actual_all_with_ploidy_averaged_across_tumour_samples.csv")
+#cna <- cna[c("PCSI_ID" ,"ploidy")]
+#colnames(cna)[1] <- "ID"
+clinical_omics$ID <- clinical_omics$PCSI_ID
+clinical_sum <- left_join(clinical_sum, clinical_omics[c("ID","Moffitt.mod","Age.at.Dx","ploidy")], )
+#clinical_sum <- left_join(clinical_sum,cna)
+#clinical_sum$ploidy_binary <- NA
+#clinical_sum$ploidy_binary[clinical_sum$ploidy > 2] <- "higher_ploidy"
+#clinical_sum$ploidy_binary[clinical_sum$ploidy <= 2] <- "lower_ploidy"
+
+#epdom$CaseID <- factor(epdom$CaseID, levels = unique(plot_df_prop$CaseID))
+#epdom$PCSI_ID <- epdom$CaseID[levels(plot_df_prop$CaseID)]
+
+CaseID_order <- result$CaseID[order(result$Epithelial_Cell_Annotations)]
+
+epdom <- epdom[match(CaseID_order,  epdom$CaseID), ]
+
+clinical_sum <- clinical_sum[match(CaseID_order,  clinical_sum$CaseID), ]
+
+track_features <- left_join(epdom, clinical_sum, by = "CaseID")
+
+# Define colors: lightgray for 0, custom color for 1
+# Load necessary library
+library(grid)
+track_colours <- c(
+  "Basal" = "darkred",
+  "Exocrine" = "gold",
+  "S100A4+ Non-Basal" = "#C04E01",
+  "Non-polarized" = "darkgreen",
+  "TFhigh_Classical" = "navy",
+  "TFlow_Classical" = "blue",
+  "Hybrid" = "#673A87"
+) #"#673A87",
+
+# Define your color palette
+track_colours <- c(
+  "Basal" = "darkred",
+  "Exocrine" = "gold",
+  "S100A4+ Non-Basal" = "#C04E01",
+  "Non-polarized" = "darkgreen",
+  "TFhigh_Classical" = "navy",
+  "TFlow_Classical" = "blue",
+  "Hybrid" = "#673A87"
+)
+
+# Input vector
+annotations <- track_features$dominant_Epithelial_Cell_Annotations_withoutEx
+
+# SVG output
+svg("epithelial_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "M" = "#004D40",
+  "F" = "#D81B60"
+)
+
+# Input vector
+annotations <- track_features$Sex
+
+# SVG output
+svg("sex_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "0" = "grey",
+  "1" = "black"
+)
+
+# Input vector
+annotations <- as.character(track_features$Neoadjuvant_Binary)
+
+# SVG output
+svg("neoadjuvant_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+
+
+
+
+# Define your color palette
+track_colours <- c(
+  "classic" = "blue",
+  "basal-like" = "red"
+)
+
+# Input vector
+annotations <- track_features$Moffitt.mod
+
+# SVG output
+svg("RNA_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "higher_ploidy" = "#822700" ,
+  "lower_ploidy" = "#ffa178"
+)
+
+# Input vector
+annotations <- track_features$ploidy_binary
+
+# SVG output
+svg("ploidy_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "Older" = "#708238" ,
+  "Younger" = "#98FB98"
+)
+
+# Input vector
+annotations <- track_features$Age.at.Dx
+
+# SVG output
+svg("age_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "Older" = "#708238" ,
+  "Younger" = "#98FB98"
+)
+
+# Input vector
+annotations <- track_features$Age.at.Dx
+
+# SVG output
+svg("age_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+
+
+
+# Define your color palette
+track_colours <- c(
+  "Positive" = "#ffff00" ,
+  "Negative" =  "purple"
+)
+
+# Input vector
+annotations <- track_features$lymph_binary
+
+# SVG output
+svg("lymph_annotation_track_for_epithelial.svg", width = 15, height = 2)
+
+# Empty plot area
+plot(
+  0, 0, type = "n", xlim = c(0, length(annotations)), ylim = c(0, 1),
+  axes = FALSE, xlab = "", ylab = "", asp = 1
+)
+
+# Draw rectangles
+for (i in seq_along(annotations)) {
+  this_annot <- annotations[i]
+  this_col <- track_colours[this_annot]
+  rect(xleft = i - 1, ybottom = 0, xright = i, ytop = 1, col = this_col, border = NA)
+}
+
+# Close SVG
+dev.off()
+```

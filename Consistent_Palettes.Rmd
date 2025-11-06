@@ -1,0 +1,97 @@
+---
+title: "44_Consistent_Palettes"
+output: html_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{caf and immune and epithelial combined March 20th 2025, updated July 2025}
+
+library("randomcoloR")
+set.seed(1983765) 
+palette98 <- distinctColorPalette(99) #this doesn't really matter, it just creates placeholder colours that are then overwritten
+colourspec98 <- list(variable = palette98)
+
+#add manual names
+names(colourspec98[[1]]) <- c("Endothelial cells", "HIF1A+ endothelial cells","CXCL12 high endothelial cells", "Capillaries","CXCL12 high capillaries","PDPN high endothelial cells","Veins", "Venules", "Tip cells","High endothelial venules (HEVs)","CLU high endothelial cells", "CCL21 high lymphatic endothelial cells", "YAP/Col1A2 high CD105+ iCAFs", "CXCL13+ CAFs", "YAP/pMLC2/ECM high iCAFs", "Col1A2/Decorin/Fibronectin high iCAFs",  "CD36 high pericytes", "CD34+ CAFs", "Vascular smooth muscle cells", "CD105 high myCAFs","CXCL13+ CLU+ CD105+ CAFs","Decorin/Periostin high CD105+ CAFs",  "Col1A2/Decorin high CD105+ myCAFs", "ECM CAFs", "CTGF+ Fibronectin+ CAFs", "pMLC2/YAP+ mural-like myCAFs", "ECM myCAFs", "Fibronectin/pMLC2 high myCAFs", "PDPN high myCAFs", "Col1A2- myCAFs", "Col1A2/Periostin/Decorin high myCAFs",  "Fibronectin high myCAFs","Tenascin high myCAFs", "COL1A2+ myCAFs", "CCL21+ pFAK+ reticular CAFs", "CC3+ HIF1A+ CTGF+ ECM CAFs",    "CC3+ CXCL13+ Fibronectin+ CAFs", "CC3+ SERPINE+ iCAFs", 
+                              "CD4 helper T cells","CD8 T cells","CD4 T cells" ,"CD8 T cells","PD1+ CD8 T cells","Tissue resident CD4 T cells","Tissue resident memory NK cells","Tissue resident CD8 T cells","PD1+ tissue resident CD8 T cells","HLADR+ CD8 T cells","GZMB+ CD8 T cells", "GZMB+ PD1+ CD4 T cells", "GZMB+ tissue resident CD8 T cells","CTLA4+ TIGIT+ activated CD4 T cells","PDL1+ PD1+ tissue resident CD8 T cells","Gamma delta T cells", "CTLA4+ TIGIT+ Tregs" , "CTLA4+ TIGIT+ activated Tregs", "HLADR+ mature B cells","B cells", "iNOS+ TAMs","HLADR high monocytes", "Proliferating monocytes", "PDL1/HLADR high monocytes", "HLADR high TAMs","Arg1/MPO high PMN-MDSCs","HLADR high DCs", "HLADR high activated cDC2s", "MPO high neutrophils","MPO high TAMs",  "MPO+ Mo-MDSCs","Arg1+ TAMs", "PD1+ PMN-MDSCs","PDL1+ Arg1/MPO high PMN-MDSCs", "PDL1+ MPO high neutrophils", "Proliferating HLADR+ cDC2s","TAMs","Vim high TAMs", "cDC1s" ,"iNOS+ MPO+ PMN-MDSCs","plasmacytoid DCs", "CleavedCaspase3+ MDSCs", "CleavedCaspase3+ monocytes", "TF-low classical", "Classical", "TFlow_Classical", "TF-high classical", "TFhigh_Classical" , "Mixed1 (hybrid_secretory)",  "Mixed1", "Non-polarized", "SecretoryHybrid", 'Other', "Nonmalignant", "Exocrine",  "Bimodal", "Mixed",  "Mixed2 (mixed tumour)", "Hybrid"      ,      "S100A4+ Non-Basal", "Basal")
+
+#add colours, sorted by general cell lineage
+
+#red/orange for T cells
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("CD4 helper T cells","CD8 T cells","CD4 T cells" ,"CD8 T cells","PD1+ CD8 T cells","Tissue resident CD4 T cells","Tissue resident memory NK cells","Tissue resident CD8 T cells","PD1+ tissue resident CD8 T cells","HLADR+ CD8 T cells","GZMB+ CD8 T cells", "GZMB+ PD1+ CD4 T cells", "GZMB+ tissue resident CD8 T cells","CTLA4+ TIGIT+ activated CD4 T cells","PDL1+ PD1+ tissue resident CD8 T cells","Gamma delta T cells")] <- c("#FF4500", '#FF6347', '#FF7F50', '#FF2400',   '#C51E3A', '#FF6347', "#FF3131","#E30B5C", '#B22222',"#FF8C00","#FF5E0E","#E26310","#F5761A", "#ED9121", "#FFA836","#D2042D")
+
+# yellow for Tregs
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("CTLA4+ TIGIT+ Tregs" , "CTLA4+ TIGIT+ activated Tregs")] <- c("#FFFF00", "#FEDC56")
+#dark purple for B cells
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("HLADR+ mature B cells","B cells")] <- c( "#B026FF", "#BF40BF" )
+
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("HLADR high monocytes", "Proliferating monocytes", "PDL1/HLADR high monocytes")] <- c("#008000", "#98FB98", "#4CBB17","#9ACD32") 
+
+
+#make dendritic cell more neon blues, MDSCs and neutrophils darker blues, TAMs slate blues, and monocytes green
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("HLADR high DCs", "HLADR high activated cDC2s", "Proliferating HLADR+ cDC2s", "cDC1s","plasmacytoid DCs")] <- c("#a1f0ff", "#70e9ff", '#79F6FC','#01FFFF','#00CED1')
+
+#dark blues for MDSCs
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("Arg1/MPO high PMN-MDSCs","MPO high neutrophils", "MPO+ Mo-MDSCs","PD1+ PMN-MDSCs","PDL1+ Arg1/MPO high PMN-MDSCs", "PDL1+ MPO high neutrophils","iNOS+ MPO+ PMN-MDSCs")] <- c('#0000FF', '#0E4C92',  '#8080FF',   '#6495ED','#00008B', '#4682B4','#0703d8')
+
+#slate blues for TAMs
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("HLADR high TAMs","MPO high TAMs" ,"Arg1+ TAMs", "TAMs","Vim high TAMs", "iNOS+ TAMs")] <- c('#73C2FB', '#1E90FF', '#ADD8E6',   '#00BFFF', '#87CEFA', '#95C8D8' )
+
+
+#dying / CC3+ immune
+colourspec98[[1]][names(colourspec98[[1]]) %in% c( "CleavedCaspase3+ MDSCs","CleavedCaspase3+ monocytes")] <- c("#71797E", "lightgrey") 
+
+
+
+#endothelium in pinks
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("Endothelial cells", "HIF1A+ endothelial cells","CXCL12 high endothelial cells", "Capillaries","CXCL12 high capillaries","PDPN high endothelial cells","Veins", "Venules")] <- c("#ffb6c1","#ffbdc7",'#ffc5cd','#ffccd4','#ffd3da','#ffdbe0','#ffe2e6','#ffe9ec') #"Tip cells", "Proliferating HIF1A+ viens", "High endothelial venules (HEVs)" "Endothelial progenitor cells","Proliferating HIF1A+ endothelial cells", #,'#fff0f3'
+
+#proliferating endothelium
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("Tip cells","High endothelial venules (HEVs)")] <- c("#F987C5", "#F64A8A") #"#FF69B4", #"#FC0FC0","#F81894",
+
+#CLU high endothelium
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("CLU high endothelial cells")] <- c("#FFE5B4") # "#FFEdE1"
+  
+# yellow for lymph
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("CCL21 high lymphatic endothelial cells" )] <- c("#FFC067")
+
+#light pink/purple for immune-related CAF, CXCL12+ or CXCL13+
+colourspec98[[1]][names(colourspec98[[1]]) %in% c( "YAP/Col1A2 high CD105+ iCAFs","YAP/pMLC2/ECM high iCAFs", "CXCL13+ CAFs",  "Col1A2/Decorin/Fibronectin high iCAFs")] <- c("#BF40BF","#B026FF", "#CEA2fd", "#E9D3FF") 
+
+# CD105 high cells
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("CD105 high myCAFs","CXCL13+ CLU+ CD105+ CAFs","Decorin/Periostin high CD105+ CAFs",  "Col1A2/Decorin high CD105+ myCAFs")] <-   c("#ddd3ca", "#bea998", "#ae957f","#a48870")  
+
+#mycafs in no ecm or simple ecm
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("Col1A2- myCAFs","COL1A2+ myCAFs")] <- c('#FFBF00', '#FFCE1B')
+
+#mural cells
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("CD36 high pericytes","CD34+ CAFs", "Vascular smooth muscle cells")] <- c("#FFFF00", "#FEDC56", "#DECA57") #"#006400" #"#33B864", "#228B22", "#50C878" #"#9ACD32"
+
+#ECM high myCAFs
+colourspec98[[1]][names(colourspec98[[1]]) %in% c("ECM myCAFs","Fibronectin/pMLC2 high myCAFs", "PDPN high myCAFs","Col1A2/Periostin/Decorin high myCAFs", "Fibronectin high myCAFs","Tenascin high myCAFs","pMLC2/YAP+ mural-like myCAFs")] <- c('#bac1a8','#97a37c','#758451',"#63743b", '#b9d6be','#9ac4a1','#87986A')
+
+#ECM high CAFs
+colourspec98[[1]][names(colourspec98[[1]]) %in%  c("ECM CAFs", "CTGF+ Fibronectin+ CAFs" )] <- c("#81cdc6", "#B7E0D8"  )
+
+ #reticular:
+ colourspec98[[1]][names(colourspec98[[1]]) %in% c("CCL21+ pFAK+ reticular CAFs")] <- c("#FDA172") #"#D4DCCD",
+ 
+ #dying CAFs
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("CC3+ HIF1A+ CTGF+ ECM CAFs", "CC3+ CXCL13+ Fibronectin+ CAFs", "CC3+ SERPINE+ iCAFs")] <- c("#71797E",'lightgray','darkgrey')
+
+  
+
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("TF-high classical","TFhigh_Classical")] <- c("navy","navy")
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("TFlow_Classical", "TF-low classical","Classical")] <- c("blue","blue", "blue")
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("Non-polarized" , "Mixed1", "Mixed1 (hybrid_secretory)", "SecretoryHybrid", "Other")] <- c("darkgreen","darkgreen","darkgreen","darkgreen","darkgreen")
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("Exocrine","Nonmalignant")] <- c("gold","gold")
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c("Basal")] <- c("darkred")
+  colourspec98[[1]][names(colourspec98[[1]]) %in% c( "Bimodal", "Mixed",  "Mixed2 (mixed tumour)")] <- c("darkgrey","darkgrey","darkgrey")
+    colourspec98[[1]][names(colourspec98[[1]]) %in% c("Hybrid")] <- c("#673A87")
+      colourspec98[[1]][names(colourspec98[[1]]) %in% c("S100A4+ Non-Basal")] <- c("#C04E01")
+
+```

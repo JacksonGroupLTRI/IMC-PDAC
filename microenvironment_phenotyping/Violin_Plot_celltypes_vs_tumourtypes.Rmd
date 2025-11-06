@@ -1,0 +1,518 @@
+---
+title: "46_Violin_Plot_Best"
+output: html_document
+date: "2025-03-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+This file currently requires the colourspec98 palette be loaded from the 44_Consistent_Palettes.Rmd file in order for the annotation track on violin ggplot to work. 
+
+```{load datasets}
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+caf <- readRDS("/Users/ferris/Desktop/Data for Barbara/Shared_Already/IMC_CAF_data_annotated_and_filtered_labelscombined_25July2025.rds")
+
+caf_mat <- colData(caf)
+caf_expres <- as.data.frame(t(assays(caf)$X))
+caf_expres <- caf_expres[!caf_mat$CAF_Endo_Nerve_Labels == "Others",]
+
+#extract important dataframes
+caf_mat <- colData(caf)
+caf_mat <- caf_mat[!caf_mat$CAF_Endo_Nerve_Labels == "Others",]
+
+#create the singular important dataframe
+caf_mat <- cbind(caf_mat, caf_expres)
+caf_mat$CAF_Endo_Nerve_Labels <- as.factor(caf_mat$CAF_Endo_Nerve_Labels)
+caf_data <- as.data.frame(caf_mat)
+caf_data <- caf_data[!(caf_data$CAF_Endo_Nerve_Labels %in% c("Others", "Undefined")),]
+
+im <- readRDS("/Users/ferris/Desktop/Data for Barbara/Shared_Already/IMC_Immune_data_annotated_and_filtered_labelscombined_25July2025.rds") 
+
+im_mat <- colData(im)
+im_expres <- as.data.frame(t(assays(im)$X))
+im_expres <- im_expres[!im_mat$Merged_Immune_Labels == "Others",]
+
+im_mat <- im_mat[!im_mat$Merged_Immune_Labels == "Others",]
+#im_mat <- im_mat[!im_mat$Merged_Immune_Labels == "Undefined",]
+#create the singular important dataframe
+im_mat <- cbind(im_mat, im_expres)
+im_mat$Merged_Immune_Labels <- as.factor(im_mat$Merged_Immune_Labels)
+im_data <- as.data.frame(im_mat)
+
+caf_data <- caf_data[!(caf_data$CAF_Endo_Nerve_Labels %in% c("Others", "Undefined")),]
+
+#add epithelial layer
+library(readr)
+TMA_ep_df <- read_csv("/Users/ferris/Desktop/PDAC-Analysis/99_GitHub/00_TMA_reusable_data/epithelial_no6_nostroma_newnew_annotations_with_overlay_object_2025_April14_no154no11.csv")
+```
+
+```{combine datasets}
+library(readr)
+library(dplyr)
+
+ep_regions_plot <- TMA_ep_df[,c("CaseID", "Epithelial_Cell_Annotations")] 
+
+ep_regions_plot <- ep_regions_plot %>%
+  group_by(CaseID, Epithelial_Cell_Annotations) %>%    # Group by CaseID and Merged_Labels
+  summarize(total_count = n(), .groups = "drop")
+
+
+im_regions_plot  <- im_data[,c("CaseID","Merged_Immune_Labels")]
+
+# filter out undefined and NA BEFORE calculating proportions
+im_regions_plot <- im_regions_plot[!im_regions_plot$Merged_Immune_Labels == "Undefined",]
+im_regions_plot <- im_regions_plot[!is.na(im_regions_plot$CaseID),]
+
+#count cells per CaseID
+library(dplyr)
+library(purrr)
+
+# Count the number of each Merged_Labels category per CaseID
+im_regions_plot <- im_regions_plot %>%
+  group_by(CaseID, Merged_Immune_Labels) %>%    # Group by CaseID and Merged_Labels
+  summarize(total_count = n(), .groups = "drop")
+
+#count number of each label
+# Count the number of each Merged_Labels category per CaseID
+caf_regions_plot <- caf_data %>%
+  group_by(CaseID, CAF_Endo_Nerve_Labels) %>%    # Group by CaseID and Merged_Labels
+  summarize(total_count = n(), .groups = "drop")
+
+#normalize
+total_cell_count <- read.csv("total_cell_counts.csv")
+
+# Join the dataframes on the CaseID column
+im_regions_plot <- im_regions_plot %>%
+  left_join(total_cell_count, by = "CaseID") %>%          # Merge dataframes on CaseID
+  mutate(normalized_count = total_count / immune_panel_count) # Perform the division
+
+# Join the dataframes on the CaseID column
+caf_regions_plot <- caf_regions_plot %>%
+  left_join(total_cell_count, by = "CaseID") %>%          # Merge dataframes on CaseID
+  mutate(normalized_count = total_count / caf_panel_count) 
+
+
+# Join the dataframes on the CaseID column
+ep_regions_plot <- ep_regions_plot %>%
+  left_join(total_cell_count, by = "CaseID") %>%          # Merge dataframes on CaseID
+  mutate(normalized_count = total_count / ep_panel_count) 
+
+library(data.table)
+#take only the relevant columns of caf_regions_plot and im_regions plot, dcast them, and then attach the tumour label relevant to each CaseID
+ep_regions_plot <- ep_regions_plot[,c('CaseID','Epithelial_Cell_Annotations','normalized_count')]
+ep_cast <- dcast(as.data.table(ep_regions_plot), CaseID ~ Epithelial_Cell_Annotations, value.var = 'normalized_count', fill = 0)
+
+
+caf_regions_plot <- caf_regions_plot[,c('CaseID','CAF_Endo_Nerve_Labels','normalized_count')]
+caf_cast <- dcast(as.data.table(caf_regions_plot), CaseID ~ CAF_Endo_Nerve_Labels, value.var = 'normalized_count', fill = 0)
+
+
+im_regions_plot <- im_regions_plot[,c('CaseID','Merged_Immune_Labels','normalized_count')]
+im_cast <- dcast(as.data.table(im_regions_plot), CaseID ~ Merged_Immune_Labels, value.var = 'normalized_count', fill = 0)
+
+#add together
+casted <- left_join(caf_cast, im_cast, by = "CaseID")
+casted <- left_join(casted, ep_cast, by = "CaseID")
+#get dominant epithelial cell annotation here
+
+legend <- unique(TMA_ep_df[c("CaseID","dominant_Epithelial_Cell_Annotations_withEx_APRIL14")])
+
+casted <- left_join(casted, legend, by = "CaseID")
+casted_plot <- casted[-1]
+casted_plot <- casted_plot[!is.na(casted_plot$dominant_Epithelial_Cell_Annotations_withEx_APRIL14),] #casted_plot
+
+#nice
+# Calculate the average for each column grouped by most common epithelial cell annotation (aka, "tumour type")
+casted_plot <- casted_plot %>%
+  group_by(dominant_Epithelial_Cell_Annotations_withEx_APRIL14) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
+
+melt_plot <- reshape2::melt(casted_plot)
+
+#get order sorted out
+library(tidyr)
+library(dplyr)
+
+# Pivot the data to wide format
+wide_plot <- melt_plot %>%
+  pivot_wider(names_from = variable, values_from = value, values_fill = 0)
+# Compute a distance matrix
+distance_matrix <- dist(wide_plot %>% select(-dominant_Epithelial_Cell_Annotations_withEx_APRIL14))
+# Perform hierarchical clustering
+hc <- hclust(distance_matrix)
+# Get the order of groups
+group_order <- wide_plot$dominant_Epithelial_Cell_Annotations_withEx_APRIL14[hc$order]
+
+# Transpose the data to cluster variables
+distance_matrix_var <- dist(t(wide_plot %>% select(-dominant_Epithelial_Cell_Annotations_withEx_APRIL14)))
+hc_var <- hclust(distance_matrix_var)
+variable_order <- colnames(wide_plot %>% select(-dominant_Epithelial_Cell_Annotations_withEx_APRIL14))[hc_var$order]
+
+melt_plot <- melt_plot %>%
+  mutate(
+    dominant_Epithelial_Cell_Annotations_withEx_APRIL14 = factor(dominant_Epithelial_Cell_Annotations_withEx_APRIL14, levels = group_order),
+    variable = factor(variable, levels = variable_order)
+  )
+
+
+library(ggplot2)
+
+
+# Calculate the average value for each variable
+variable_avg <- melt_plot %>%
+  group_by(variable) %>%
+  summarise(avg_value = mean(value, na.rm = TRUE))
+
+# Add a column to compare values to the average
+# Add a deviation column
+melt_plot <- melt_plot %>%
+  left_join(variable_avg, by = "variable") %>%
+  mutate(deviation = (value - avg_value) / avg_value )
+  #mutate(deviation = value - avg_value) #I need to scale this to be relative to the total average value
+
+
+#combine all cell types into a single dataframe
+casted <- left_join(caf_cast, im_cast, by = "CaseID")
+casted <- left_join(casted, ep_cast, by = "CaseID")
+casted <- left_join(casted, legend, by = "CaseID")
+casted_plot <- casted[!is.na(casted$dominant_Epithelial_Cell_Annotations_withEx_APRIL14),] #casted_plot
+
+#melt
+melt_violin <- reshape2::melt(casted_plot)
+
+
+#add deviation scores
+melt_violin <- left_join(
+  melt_violin,
+  melt_plot %>% select(dominant_Epithelial_Cell_Annotations_withEx_APRIL14, variable, deviation),
+  by = c("dominant_Epithelial_Cell_Annotations_withEx_APRIL14", "variable")
+)
+
+melt_violin_capped <- melt_violin
+melt_violin_capped$value[melt_violin_capped$value > 0.05] <- 0.05
+
+
+melt_violin_capped$variable <- as.factor(melt_violin_capped$variable)
+
+
+melt_violin_capped$CaseID <- as.factor(melt_violin_capped$CaseID)
+melt_violin_capped$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 <- as.factor(melt_violin_capped$dominant_Epithelial_Cell_Annotations_withEx_APRIL14)
+
+```
+
+```{statistical tests for differences between tumour type categories}
+library(tidyverse) # includes ggplot2, for data visualisation. dplyr, for data manipulation.kkkkkk
+library(RColorBrewer)
+library(reshape2) 
+
+#ok great, now just deal with significance
+# Install required packages
+if (!require("dunn.test")) install.packages("dunn.test")
+if (!require("dplyr")) install.packages("dplyr")
+
+library(dunn.test)
+library(dplyr)
+
+# Assuming melt_violin is already loaded as a dataframe
+# Example structure of melt_violin:
+# melt_violin <- data.frame(value = c(...), dominant_cooccurence_group = c(...), variable = c(...))
+
+# Combine dominant_cooccurence_group and variable into a single group for comparison
+melt_violin <- melt_violin %>%
+  mutate(group = interaction(dominant_Epithelial_Cell_Annotations_withEx_APRIL14, variable, sep = ":"))
+
+melt_violin
+#set up for each test; I basically need to do a distinct kruskal-wallis test for each variable (cell type) to see which cell types have any differences between tumour types, and then multiple hypothesis testing correct
+kruskal_data <- as.data.frame(matrix(ncol = 4, nrow =81)) #two more bite the dust
+colnames(kruskal_data) <- c("celltype","statistic","parameter", "p.value")
+
+for (i in 1:length(unique(melt_violin$variable))){
+  target_celltype <- unique(melt_violin$variable)[i]
+  subset_df <- melt_violin[melt_violin$variable == target_celltype,]
+  kruskal_result <- kruskal.test(value ~ group, data = subset_df)
+  kruskal_data$celltype[i] <- as.character(target_celltype)
+  kruskal_data$statistic[i] <- kruskal_result$statistic
+  kruskal_data$parameter[i] <- kruskal_result$parameter
+  kruskal_data$p.value[i] <- kruskal_result$p.value
+  #kruskal_list[[target_celltype]] <- kruskal_result
+}
+
+kruskal_data$p.value.adj <-  kruskal_data$p.value*83
+#look at celltypes worth follow up:
+#relevant: 
+kruskal_data_rel <- kruskal_data[kruskal_data$p.value.adj < 0.05,]
+
+#save output
+write.csv(kruskal_data_rel, "violin_plot_kruskaltest.csv")
+
+#next, within the cell types that have differences between tumour types, I want to determine which tumour types specifically are different from the rest
+#Compare target group's values to all groups that are not that target group, a 'significantly different from average' statistical test, aka two sided Wilcox test
+library(dplyr)
+library(reshape2)
+library(stats)
+
+# Initialize a list to store test results
+group_comparison_data <- list()
+
+# Loop through each unique group (celltype)
+for (target_celltype in unique(kruskal_data_rel$celltype)) {
+  for(target_tumour in unique(melt_violin$dominant_Epithelial_Cell_Annotations_withEx_APRIL14)) {
+  
+  # Create "target group" vs "all others" columns
+  subset_df <- melt_violin[melt_violin$variable == target_celltype,]
+  subset_df <- subset_df %>%
+    mutate(
+      comparison_group = ifelse(dominant_Epithelial_Cell_Annotations_withEx_APRIL14 == target_tumour, "target", "others")
+    )
+  
+  # Perform the test (e.g., Mann-Whitney U test)
+  test_result <- wilcox.test(
+    subset_df$value[subset_df$comparison_group == "target"],
+    subset_df$value[subset_df$comparison_group == "others"],
+    alternative = "two.sided" # Test for significant difference
+  )
+  
+  # Store results in a list
+  group_comparison_data[[paste(target_celltype, target_tumour)]] <- data.frame(
+    variable = target_celltype,
+    dominant_Epithelial_Cell_Annotations_withEx_APRIL14 = target_tumour,
+    p_value = test_result$p.value,
+    statistic = test_result$statistic
+  )
+}}
+
+# Combine results into a single data frame
+comparison_results_df <- bind_rows(group_comparison_data)
+
+# Adjust p-values for multiple comparisons
+comparison_results_df <- comparison_results_df %>%
+  mutate(adj_p_value = p.adjust(p_value, method = "bonferroni"))
+
+# View results
+print(comparison_results_df)
+  
+comparison_results_df_rel <- comparison_results_df[comparison_results_df$adj_p_value < 0.05, ]
+
+#save output
+write.csv(comparison_results_df_rel , "violin_plot_bonferroni_corrected_wilcox_test_after_kruskaltest.csv")
+
+
+```
+
+```{format and plot violin plot}
+#add to melt_violin and try plotting
+melt_violin_capped_sig <- left_join(melt_violin_capped, comparison_results_df_rel, by = c("dominant_Epithelial_Cell_Annotations_withEx_APRIL14","variable"),)
+melt_violin_capped_sig$sig <- "no"
+melt_violin_capped_sig$sig[melt_violin_capped_sig$adj_p_value < 0.05] <- "yes"
+
+melt_violin_capped_sig$adj_p_value[is.na(melt_violin_capped_sig$adj_p_value)] <- 1
+
+#remove all the NAs, and output significance dataframe
+violin_stats <- melt_violin_capped_sig
+violin_stats <- violin_stats[!violin_stats$adj_p_value == 1,]
+
+# better order for visual interpretation of categories
+melt_violin_capped_sig_ordered <- melt_violin_capped_sig 
+melt_violin_capped_sig_ordered <- melt_violin_capped_sig_ordered[!melt_violin_capped_sig_ordered$variable %in% c("High endothelial venules (HEVs)"),]
+melt_violin_capped_sig_ordered$variable <- factor(melt_violin_capped_sig_ordered$variable, levels = c("CCL21 high lymphatic endothelial cells","CD36 high pericytes", "CD34+ CAFs", "Vascular smooth muscle cells","Col1A2- myCAFs" ,"COL1A2+ myCAFs" ,"CCL21+ pFAK+ reticular CAFs" ,   "CD105 high myCAFs"   , "CXCL13+ CLU+ CD105+ CAFs" , "Decorin/Periostin high CD105+ CAFs" ,    "Col1A2/Decorin high CD105+ myCAFs"   ,"Fibronectin/pMLC2 high myCAFs" , "PDPN high myCAFs",    "Col1A2/Periostin/Decorin high myCAFs"  ,"Fibronectin high myCAFs"  , "Tenascin high myCAFs"  ,"ECM CAFs", "CTGF+ Fibronectin+ CAFs","pMLC2/YAP+ mural-like myCAFs"     ,  "ECM myCAFs"     ,"Dying CTGF high ECM CAFs"  , "Dying Fibronectin high CAFs"    ,        "Dying SERPINE+ CAFs"  ,   "YAP/Col1A2 high CD105+ iCAFs","YAP/pMLC2/ECM high iCAFs", "CXCL13+ CAFs",  "Col1A2/Decorin/Fibronectin high iCAFs"   ,            "CC3+ HIF1A+ CTGF+ ECM CAFs" ,   "CC3+ CXCL13+ Fibronectin+ CAFs","CC3+ SERPINE+ iCAFs",
+
+
+  "Endothelial cells", "Capillaries", "CXCL12 high capillaries", "CXCL12 high endothelial cells", "HIF1A+ endothelial cells","Veins", "Venules", "PDPN high endothelial cells", "CLU high endothelial cells","Tip cells",
+
+"HLADR high DCs",                   
+ "HLADR high activated cDC2s" ,         "Proliferating HLADR+ cDC2s",         
+"cDC1s" ,                              "plasmacytoid DCs" ,  "Arg1/MPO high PMN-MDSCs",         
+ "CleavedCaspase3+ MDSCs", "MPO high PMN-MDSCs",     
+"iNOS+ MPO+ PMN-MDSCs" ,                "MPO high neutrophils" ,              
+      "PD1+ PMN-MDSCs" ,                    
+ "MPO+ Mo-MDSCs" ,                      "Mo-MDSCs"  ,                         
+ "CleavedCaspase3+ monocytes" ,         "HLADR high monocytes" ,              
+         "Proliferating monocytes",            
+ "HLADR high TAMs" ,                    "MPO high TAMs" ,                     
+ "TAMs",  "Arg1+ TAMs",                    "iNOS+ TAMs",
+ "Vim high TAMs", 
+
+"B cells", "HLADR+ mature B cells",   "Gamma delta T cells",                 "CD4 T cells", "CTLA4+ TIGIT+ activated CD4 T cells", "GZMB+ PD1+ CD4 T cells",              "Tissue resident CD4 T cells",          "HLADR+ CD8 T cells",  "PD1+ CD8 T cells",                    "CD8 T cells"  ,      "GZMB+ CD8 T cells" ,
+ "GZMB+ tissue resident CD8 T cells" ,              "Tissue resident CD8 T cells",        
+ "PD1+ tissue resident CD8 T cells",      "Tissue resident memory NK cells",   
+ "CTLA4+ TIGIT+ Tregs" ,                "CTLA4+ TIGIT+ activated Tregs" ,     
+
+"Exocrine" , "Classical", "TFhigh_Classical" ,   "TFlow_Classical",     "Non-polarized" ,   'Other',      "S100A4+ Non-Basal",   "Hybrid"      ,      "Basal"
+)) #"Basal", "Non-polarized", "Mixed",   "TF-low classical", "TF-high classical", "Exocrine"
+
+caf_types <- c("CCL21 high lymphatic endothelial cells","CD36 high pericytes", "CD34+ CAFs", "Vascular smooth muscle cells","Col1A2- myCAFs" ,"COL1A2+ myCAFs" ,"CCL21+ pFAK+ reticular CAFs" ,   "CD105 high myCAFs"   , "CXCL13+ CLU+ CD105+ CAFs" , "Decorin/Periostin high CD105+ CAFs" ,    "Col1A2/Decorin high CD105+ myCAFs"   ,"Fibronectin/pMLC2 high myCAFs" , "PDPN high myCAFs",    "Col1A2/Periostin/Decorin high myCAFs"  ,"Fibronectin high myCAFs"  , "Tenascin high myCAFs"  ,"ECM CAFs", "CTGF+ Fibronectin+ CAFs","pMLC2/YAP+ mural-like myCAFs"     ,  "ECM myCAFs"     ,"Dying CTGF high ECM CAFs"  , "Dying Fibronectin high CAFs"    ,        "Dying SERPINE+ CAFs"  ,   "YAP/Col1A2 high CD105+ iCAFs","YAP/pMLC2/ECM high iCAFs", "CXCL13+ CAFs",  "Col1A2/Decorin/Fibronectin high iCAFs"   ,            "CC3+ HIF1A+ CTGF+ ECM CAFs" ,   "CC3+ CXCL13+ Fibronectin+ CAFs","CC3+ SERPINE+ iCAFs","Endothelial cells", "Capillaries", "CXCL12 high capillaries", "CXCL12 high endothelial cells", "HIF1A+ endothelial cells","Veins", "Venules", "PDPN high endothelial cells", "CLU high endothelial cells","Tip cells")
+
+immune_types <- c("HLADR high DCs",                   
+ "HLADR high activated cDC2s" ,         "Proliferating HLADR+ cDC2s",         "cDC1s" ,                              "plasmacytoid DCs" ,  "Arg1/MPO high PMN-MDSCs",          "CleavedCaspase3+ MDSCs", "MPO high PMN-MDSCs",    "iNOS+ MPO+ PMN-MDSCs" ,                "MPO high neutrophils" ,                  "PD1+ PMN-MDSCs" ,                     "MPO+ Mo-MDSCs" ,                      "Mo-MDSCs"  ,                          "CleavedCaspase3+ monocytes" ,         "HLADR high monocytes" ,                       "Proliferating monocytes",             "HLADR high TAMs" ,                    "MPO high TAMs" ,                      "TAMs",  "Arg1+ TAMs",                    "iNOS+ TAMs", "Vim high TAMs", "B cells", "HLADR+ mature B cells",   "Gamma delta T cells",                "CTLA4+ TIGIT+ activated CD4 T cells", "GZMB+ PD1+ CD4 T cells",                   "CD4 T cells",             "Tissue resident CD4 T cells",          "HLADR+ CD8 T cells",  "PD1+ CD8 T cells",                    "CD8 T cells"  ,      "GZMB+ CD8 T cells" , "GZMB+ tissue resident CD8 T cells" ,              "Tissue resident CD8 T cells",    "PD1+ tissue resident CD8 T cells",        "Tissue resident memory NK cells",   "CTLA4+ TIGIT+ Tregs" ,                "CTLA4+ TIGIT+ activated Tregs")
+
+#epithelial_types <- c("Basal", "Exocrine", "Mixed", "Non-polarized", "TF-high classical", "TF-low classical")
+epithelial_types <-  c("TFhigh_Classical" , "Exocrine" ,        "Non-polarized" ,    "Basal"     ,       "TFlow_Classical",   "Hybrid"      ,      "S100A4+ Non-Basal")
+
+#amazing, make the violin plot to go with it
+melt_violin_capped_sig_ordered <- droplevels(melt_violin_capped_sig_ordered)
+
+
+#Cap proportions shown at 3%, so that changes in most cell type abundances are visible
+melt_violin_capped_sig_ordered_var <- melt_violin_capped_sig_ordered
+melt_violin_capped_sig_ordered_var$value[melt_violin_capped_sig_ordered_var$value > 0.03] <- 0.03
+
+melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 <- as.factor(melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14)
+
+melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 <- factor(melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14, levels = c("Exocrine" ,  "TFhigh_Classical" ,   "TFlow_Classical",     "Non-polarized" ,           "S100A4+ Non-Basal",    "Hybrid"      ,   "Basal"))
+
+
+#add stroma types
+melt_violin_capped_sig_ordered_var$stroma_type <- NA
+melt_violin_capped_sig_ordered_var$stroma_type[melt_violin_capped_sig_ordered_var$variable %in% caf_types] <- "CAF"
+melt_violin_capped_sig_ordered_var$stroma_type[melt_violin_capped_sig_ordered_var$variable %in% immune_types] <- "Immune"
+melt_violin_capped_sig_ordered_var$stroma_type[melt_violin_capped_sig_ordered_var$variable %in% epithelial_types] <- "Epithelial"
+
+melt_violin_capped_sig_ordered_var$stroma_type <- factor(melt_violin_capped_sig_ordered_var$stroma_type, levels = c("Epithelial", "Immune", "CAF"))
+
+melt_violin_capped_sig_ordered_var <- melt_violin_capped_sig_ordered_var %>%
+  mutate(sig_color = ifelse(p_value < 0.05, "black", "white"))
+
+
+library(ggnewscale)
+#Directly combine violin plot with the cell type annotation track
+png("Stromal_Cell_Proportion_per_Tumour_Type_violin_outliers_capped_atpoint03_BEST_updatedgroups_with_ep_november2025.png", height = 8, width = 26, res = 300, units = "in")
+ggplot(melt_violin_capped_sig_ordered_var, aes(x = variable, y = value, fill = deviation, group = variable, color = sig_color)) + #adj_p_value
+  geom_violin(scale = "width", trim = TRUE, size = 0.8) +
+  # Facet by stroma type (columns) and dominant co-occurrence group (rows)
+  facet_grid(rows = vars(dominant_Epithelial_Cell_Annotations_withEx_APRIL14), 
+             cols = vars(stroma_type), 
+             scales = "free", space = "free", drop = TRUE) + 
+  scale_fill_gradient2(
+    low = "blue", mid = "#EFEFEF", high = "red", 
+    midpoint = 0, name = "Deviation from Average Proportion", 
+    limits = c(-1.5, 1.5),   # Set the scale to range from -2 to 2
+    oob = scales::squish
+  ) +
+  scale_color_identity(name = "Significance", guide = "legend",
+                       breaks = c("black", "white"),
+                       labels = c("< 0.05", "≥ 0.05")) +
+  #scale_colour_gradient2(
+  #  low = "black", mid = "white", high = "white", 
+  #  midpoint = 0.05, name = "Significance", 
+  #  limits = c(0, 0.1),   # Set the scale to range from -2 to 2
+  #  oob = scales::squish
+ # ) +
+  theme_minimal() +
+  labs(
+    x = "Stromal Cell Type",
+    y = "Cell Proportion",
+    title = "Stromal Cell Type Proportions per Tumour Type"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size =10),
+    legend.position = "right",
+    panel.spacing.x = unit(1.5, "lines"),
+    axis.text.y = element_blank()
+  ) +
+
+  new_scale("fill") +
+  geom_tile(data = melt_violin_capped_sig_ordered_var[melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 == "Basal",], aes(x = variable, y = -0.012, fill = variable), color = NA,height = -0.01) + #somewhat working anno3
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") 
+dev.off()
+
+```
+
+
+```{svg version of violin plot, for easier use in adobe illustrator}
+library(ggnewscale)
+svg("Stromal_Cell_Proportion_per_Tumour_Type_ViolinPlot.svg", height = 8, width = 26)
+ggplot(melt_violin_capped_sig_ordered_var, aes(x = variable, y = value, fill = deviation, group = variable, color = sig_color)) + # adj_p_value < 0.05
+  geom_violin(scale = "width", trim = TRUE, size = 0.8) +
+  # Facet by stroma type (columns) and dominant co-occurrence group (rows)
+  facet_grid(rows = vars(dominant_Epithelial_Cell_Annotations_withEx_APRIL14), 
+             cols = vars(stroma_type), 
+             scales = "free", space = "free", drop = TRUE) + 
+  scale_fill_gradient2(
+    low = "blue", mid = "#EFEFEF", high = "red", 
+    midpoint = 0, name = "Deviation from Average Proportion", 
+    limits = c(-1.5, 1.5),   # Set the scale to range from -2 to 2
+    oob = scales::squish
+  ) +
+  #scale_colour_gradient2(
+  #  low = "black", mid = "white", high = "white", 
+  #  midpoint = 0.05, name = "Significance", 
+  #  limits = c(0, 0.1),   # Set the scale to range from -2 to 2
+  #  oob = scales::squish
+  #) +
+  #scale_color_manual(
+  #  values = c("TRUE" = "black", "FALSE" = "white"),
+  #  name = "Significance"
+  #) +
+  scale_color_identity(name = "Significance", guide = "legend",
+                       breaks = c("black", "white"),
+                       labels = c("< 0.05", "≥ 0.05")) +
+  theme_minimal() +
+  labs(
+    x = "Stromal Cell Type",
+    y = "Cell Proportion",
+    title = "Stromal Cell Type Proportions per Tumour Type"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size =10),
+    legend.position = "right",
+    panel.spacing.x = unit(1.5, "lines"),
+    axis.text.y = element_blank()
+  ) +
+
+  new_scale("fill") +
+  geom_tile(data = melt_violin_capped_sig_ordered_var[melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 == "Basal",], aes(x = variable, y = -0.012, fill = variable), color = NA,height = -0.01) + #somewhat working anno3
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") 
+dev.off()
+
+
+svg_plot <- ggplot(melt_violin_capped_sig_ordered_var, aes(x = variable, y = value, fill = deviation, group = variable, color = sig_color)) + #adj_p_value < 0.05
+  geom_violin(scale = "width", trim = TRUE, size = 0.8) +
+  # Facet by stroma type (columns) and dominant co-occurrence group (rows)
+  facet_grid(rows = vars(dominant_Epithelial_Cell_Annotations_withEx_APRIL14), 
+             cols = vars(stroma_type), 
+             scales = "free", space = "free", drop = TRUE) + 
+  scale_fill_gradient2(
+    low = "blue", mid = "#EFEFEF", high = "red", 
+    midpoint = 0, name = "Deviation from Average Proportion", 
+    limits = c(-1.5, 1.5),   # Set the scale to range from -2 to 2
+    oob = scales::squish
+  ) +
+  #scale_colour_gradient2(
+  #  low = "black", mid = "white", high = "white", 
+  #  midpoint = 0.05, name = "Significance", 
+  #  limits = c(0, 0.1),   # Set the scale to range from -2 to 2
+  #  oob = scales::squish
+  #) +
+  #scale_color_manual(
+  #  values = c("TRUE" = "black", "FALSE" = "white"),
+   # name = "Significance"
+  #) +
+    scale_color_identity(name = "Significance", guide = "legend",
+                       breaks = c("black", "white"),
+                       labels = c("< 0.05", "≥ 0.05")) +
+  theme_minimal() +
+  labs(
+    x = "Stromal Cell Type",
+    y = "Cell Proportion",
+    title = "Stromal Cell Type Proportions per Tumour Type"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, size =10),
+    legend.position = "right",
+    panel.spacing.x = unit(1.5, "lines"),
+    axis.text.y = element_blank()
+  ) +
+  new_scale("fill") +
+  geom_tile(data = melt_violin_capped_sig_ordered_var[melt_violin_capped_sig_ordered_var$dominant_Epithelial_Cell_Annotations_withEx_APRIL14 == "Basal",], aes(x = variable, y = -0.012, fill = variable), color = NA,height = -0.01) + #somewhat working anno3
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") 
+ggsave("violin_plot_Figure2.svg", plot = svg_plot, device = "svg", height = 8, width = 26)

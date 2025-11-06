@@ -1,0 +1,434 @@
+---
+title: "45_FINAL_Marker_by_Granular_Label_bubbleplots"
+output: html_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## bubbleplot of select markers vs annotated cell types (caf, immune, epithelial)
+
+```{order cell types by similarity of expression}
+im_order_new <- c(
+  'B cells', 'HLADR+ mature B cells',
+  'HLADR high DCs', 'HLADR high activated cDC2s', 'Proliferating HLADR+ cDC2s', 'cDC1s', 'plasmacytoid DCs', "Gamma delta T cells", 'CD4 T cells', 'CTLA4+ TIGIT+ activated CD4 T cells', 'GZMB+ PD1+ CD4 T cells', 'PD1+ CD4 T cells', 'PDL1+ CD4 T cells', 'Tissue resident CD4 T cells', 'GZMB+ CD8 T cells', 'GZMB+ tissue resident CD8 T cells', 'HLADR+ CD8 T cells', 'PD1+ CD8 T cells', "PDL1+ CD8 T cells", "PDL1+ PD1+ tissue resident CD8 T cells", "Tissue resident CD8 T cells", 'PD1+ tissue resident CD8 T cells',  'CD8 T cells', 'CTLA4+ TIGIT+ Tregs', 'CTLA4+ TIGIT+ activated Tregs', "Tissue resident memory NK cells", 'Arg1/MPO high PMN-MDSCs', 'CleavedCaspase3+ MDSCs', 'MPO high PMN-MDSCs',  'PDL1+ Arg1/MPO high PMN-MDSCs', 'PDL1+ MPO high PMN-MDSCs', "iNOS+ MPO+ PMN-MDSCs", 'MPO high neutrophils', 'PDL1+ MPO high neutrophils', 'PD1+ PMN-MDSCs', 'MPO+ Mo-MDSCs',  'CleavedCaspase3+ monocytes', 'HLADR high monocytes', 'PDL1/HLADR high monocytes', 'Proliferating monocytes',
+'HLADR high TAMs', 'MPO high TAMs', 'TAMs', 'Vim high TAMs', 'Arg1+ TAMs', 'iNOS+ TAMs', "Undefined")
+
+
+caf_order <- c("Endothelial cells", "HIF1A+ endothelial cells","CXCL12 high endothelial cells", "Capillaries","CD36+ capillaries","CXCL12 high capillaries","PDPN high endothelial cells","Veins", "Venules", "CCL21 high lymphatic endothelial cells","CD105 high lymphatic endothelial cells","CLU high capillaries", "CLU high endothelial cells","Endothelial progenitor cells","Tip cells", "YAP/Col1A2 high CD105+ iCAFs","YAP/pMLC2/ECM high iCAFs","Col1A2/Decorin/Fibronectin high iCAFs","CXCL13+ CAFs","CD36 high pericytes", "CD34+ CAFs", "Vascular smooth muscle cells", "CCL21+ pFAK+ reticular CAFs", "CD105 high myCAFs","CXCL13+ CLU+ CD105+ CAFs","Decorin/Periostin high CD105+ CAFs",  "Col1A2/Decorin high CD105+ myCAFs", "ECM CAFs", "CTGF high ECM CAFs", "pMLC2/YAP+ mural-like myCAFs","ECM myCAFs","Fibronectin/pMLC2 high myCAFs", "PDPN high myCAFs","Col1A2/Periostin/Decorin high myCAFs", "Fibronectin high myCAFs","Tenascin high myCAFs","Col1A2- myCAFs","COL1A2+ myCAFs", "CTGF+ Fibronectin+ CAFs","CC3+ HIF1A+ CTGF+ ECM CAFs", "CC3+ CXCL13+ Fibronectin+ CAFs", "CC3+ SERPINE+ iCAFs", "Undefined") 
+
+```
+
+```{for caf and endothelium cell type bubbleplots}
+
+#make a magma-style bubbleplot of marker by annotated cell type. Size of dot is how many of that cell type are "positive" (z-score > 1), and colour of dot is the average expression of that marker z-scored across all populations. So colour represents average strength of expression, and size represents 'robustness' of expression in that cluster
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+caf <- readRDS("/Users/ferris/Desktop/IMC-PDAC/000_data/ProcessedSingleCellData/IMC_CAF_data_annotated_and_filtered_labelscombined_25July2025.rds")
+
+
+caf_mat <- colData(caf)
+caf_expres <- as.data.frame(t(assays(caf)$X))
+caf_expres <- caf_expres[!caf_mat$CAF_Endo_Nerve_Labels == "Others",] #remove non-CAF cells present in this dataset
+
+#extract important dataframes
+caf_mat <- colData(caf)
+caf_mat <- caf_mat[!caf_mat$CAF_Endo_Nerve_Labels == "Others",]
+
+#create the singular important dataframe
+caf_mat <- cbind(caf_mat, caf_expres)
+caf_mat$CAF_Endo_Nerve_Labels <- as.factor(caf_mat$CAF_Endo_Nerve_Labels)
+caf_mat <- as.data.frame(caf_mat)
+
+marker_names <- colnames(caf_expres)
+
+#take average z-score per Caf_Endo_Nerve_Labels, marker
+library(dplyr)
+
+# Assuming marker_names is a vector of column names you want to average
+avg_z <- caf_mat %>%
+  group_by(CAF_Endo_Nerve_Labels) %>%
+  summarise(across(all_of(marker_names), mean, na.rm = TRUE))
+
+#take percent z-score > 1 per Caf_Endo_Nerve_Labels, marker
+pct_z <- caf_mat %>%
+  group_by(CAF_Endo_Nerve_Labels) %>%
+  summarise(across(all_of(marker_names), ~ mean(. > 1, na.rm = TRUE) * 100))
+
+
+#melt and bind them together
+library(reshape2)
+avg_z_melt <- reshape2::melt(avg_z)
+colnames(avg_z_melt) <- c("CAF_Endo_Nerve_Labels", "marker", "avg_z")
+pct_z_melt <- reshape2::melt(pct_z)
+colnames(pct_z_melt) <- c("CAF_Endo_Nerve_Labels", "marker", "pct_z")
+
+caf_bubble <- left_join(avg_z_melt, pct_z_melt, by = c("CAF_Endo_Nerve_Labels", "marker"))
+
+#make a bubbleplot of x = marker, y = Caf_Endo_Nerve_Label, size = percent_exprs, fill = average_exprs
+library(ggplot2)
+library(viridis)
+library(scales)
+
+#automatic cell type ordering
+# Compute hierarchical clustering for rows and columns
+#row_order <- hclust(dist(tidyr::pivot_wider(caf_bubble, names_from = marker, values_from = avg_z) %>% select(-CAF_Endo_Nerve_Labels) %>% as.matrix()))$order
+#col_order <- hclust(dist(tidyr::pivot_wider(caf_bubble, names_from = CAF_Endo_Nerve_Labels, values_from = avg_z) %>% select(-marker) %>% as.matrix()))$order
+
+# Reorder factors based on clustering
+#caf_bubble$CAF_Endo_Nerve_Labels <- factor(caf_bubble$CAF_Endo_Nerve_Labels, levels = unique(caf_bubble$CAF_Endo_Nerve_Labels)[row_order])
+#caf_bubble$marker <- factor(caf_bubble$marker, levels = unique(caf_bubble$marker)[col_order])
+
+#confirm that manually ordered cell types include all cell types present in this dataset
+unique(caf_bubble$CAF_Endo_Nerve_Labels)[!unique(caf_bubble$CAF_Endo_Nerve_Labels) %in% caf_order] #caf_order needs to be updated
+
+#order markers so that co-expressed markers are proximal to each other, and follow the same general order as cell type
+caf_bubble$CAF_Endo_Nerve_Labels <- factor(caf_bubble$CAF_Endo_Nerve_Labels, levels = caf_order)
+caf_bubble$marker <- factor(caf_bubble$marker, levels =  c("CD31", "CD34", "CD36", "CD105", "Vimentin",
+  "CLU", "MYH11", "NR2F2",  "ESM1" ,  "CXCL12"  ,   "SMA","Decorin", "pMLC2","Podoplanin","FAP",
+  "EDA","EDB", "Fibronectin", "Tenacin",  "Periostin", "PDGFRb" , "PDGFRab"  , "Col1A2",  "pSMAD2" ,  "YAP"   ,     "ColIV",     "CTGF",    "FGG"      ,   "Cleaved_Col", "pFAK"    ,           "CCL21"     ,  "PGP9.5",  "CXCL13"   ,      "Ki67" ,       "HLA_ABC"  ,    "CD45"  ,     "SERPINE1"   , "HIF1A"     ,  "CC3"  ,  "PNAD" ,  "CD163",  "Ecad_Pcad",  "panCK" , "CD74" ))
+
+# Create the bubble plot
+#bubble_plot <- ggplot(caf_bubble, aes(x = marker, y = CAF_Endo_Nerve_Labels, size = pct_z, fill = avg_z)) +
+ # geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+ # scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+#  theme_classic() +
+ # theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels
+ #   #scale_alpha_continuous(limits = c(0, 1), oob = scales::squish) +
+ # labs(size = "Percentage Z", fill = "Average Z", 
+ #      x = "Marker", y = "CAF/Endo/Nerve Label",
+ #      title = "")
+
+# Save as an SVG file
+#ggsave("bubble_plot_caf.svg", plot = bubble_plot, width = 10, height = 10, device = "svg")
+
+cafonly_bubble <- caf_bubble[caf_bubble$CAF_Endo_Nerve_Labels %in% c("YAP/Col1A2 high CD105+ iCAFs" , "YAP/pMLC2/ECM high iCAFs", "Col1A2/Decorin/Fibronectin high iCAFs",  "CXCL13+ CAFs"      ,   "CD36 high pericytes"    , "CD34+ CAFs" ,        "Vascular smooth muscle cells"     ,      "CCL21+ pFAK+ reticular CAFs"  , "CD105 high myCAFs" ,   "CXCL13+ CLU+ CD105+ CAFs"   ,            "Decorin/Periostin high CD105+ CAFs" ,  "Col1A2/Decorin high CD105+ myCAFs"  ,    "ECM CAFs", "CTGF high ECM CAFs", "pMLC2/YAP+ mural-like myCAFs"    ,       "ECM myCAFs" , "Fibronectin/pMLC2 high myCAFs"     ,    
+"PDPN high myCAFs" ,         "Col1A2/Periostin/Decorin high myCAFs" ,  "Fibronectin high myCAFs"   , "Tenascin high myCAFs",         "Col1A2- myCAFs"     , "COL1A2+ myCAFs" ,   "CTGF+ Fibronectin+ CAFs"      ,"CC3+ HIF1A+ CTGF+ ECM CAFs"     , "CC3+ CXCL13+ Fibronectin+ CAFs" ,  "CC3+ SERPINE+ iCAFs" ),]
+
+cafonly_bubble <- cafonly_bubble[cafonly_bubble$marker %in% c("CD34","CD36", "CD105", "FAP", "SMA", "MYH11", "PDGFRb" , 
+   "PDGFRab"  , "Decorin","pMLC2","Podoplanin","EDA","EDB", "Fibronectin","Tenacin","Periostin", "Col1A2", "pSMAD2" ,  "YAP"   , "CLU",    "ColIV"  ,     "CTGF", "FGG"      ,   "Cleaved_Col", "pFAK"    ,     "CXCL12"  ,        "CCL21"     ,   
+    "CXCL13"   ,    "SERPINE1"   ,       "HIF1A", "CC3", "CD74", "Ki67", "panCK" ),]   
+
+
+#for visuals, iCAF types will be allowed to sprinkle next to whatever other cell populations it is most similar to, rather than forcing them next to each other. That is reflected in the UMAP as well- iCAFs pop up next to all sorts of other CAFs rather than co-clustering
+cafonly_bubble$CAF_Endo_Nerve_Labels <- factor(cafonly_bubble$CAF_Endo_Nerve_Labels, levels = c(
+  "CCL21+ pFAK+ reticular CAFs" , "CD36 high pericytes",  "CD34+ CAFs", "Vascular smooth muscle cells",      
+   "Col1A2- myCAFs" ,"COL1A2+ myCAFs",
+  "Decorin/Periostin high CD105+ CAFs" ,  "YAP/Col1A2 high CD105+ iCAFs", "CD105 high myCAFs",   "CXCL13+ CLU+ CD105+ CAFs",
+ "Col1A2/Decorin high CD105+ myCAFs"   ,  "CXCL13+ CAFs" ,     "Col1A2/Periostin/Decorin high myCAFs",
+"Tenascin high myCAFs", "PDPN high myCAFs",
+"Fibronectin high myCAFs", "Fibronectin/pMLC2 high myCAFs" ,   "ECM myCAFs",                  
+ "Col1A2/Decorin/Fibronectin high iCAFs",   "YAP/pMLC2/ECM high iCAFs","pMLC2/YAP+ mural-like myCAFs" ,       
+"ECM CAFs",  "CTGF+ Fibronectin+ CAFs",  
+"CC3+ HIF1A+ CTGF+ ECM CAFs" ,   "CC3+ CXCL13+ Fibronectin+ CAFs",
+"CC3+ SERPINE+ iCAFs"))
+
+
+cafonly_bubble$marker <- factor(cafonly_bubble$marker, levels =  c("pFAK",  "CCL21"     , "CD36","CD34", "FAP", "CD105",    "SMA", "MYH11",    "PDGFRb" , "PDGFRab"  ,  "Decorin","pMLC2","Podoplanin","EDA", "EDB","Fibronectin","Tenacin","Periostin", "Col1A2", "pSMAD2" ,  "YAP"   , "CLU",    "ColIV"  ,     "CTGF",   "FGG"  ,   "Cleaved_Col", "CXCL12"  , "CXCL13",  "HIF1A", "CC3", "SERPINE1", "CD74", "Ki67", "panCK"))
+
+# Create the bubble plot
+#bubble_plot <- ggplot(cafonly_bubble, aes(x = marker, y = CAF_Endo_Nerve_Labels, size = pct_z, fill = avg_z)) +
+#  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+#  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+#  theme_classic() +
+#  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +  # Rotate x-axis labels
+    #scale_alpha_continuous(limits = c(0, 1), oob = scales::squish) +
+#  labs(size = "Percentage Z", fill = "Average Z", 
+#       x = "Marker", y = "CAF/Endo/Nerve Label",
+#       title = "")
+
+# Save as an SVG file
+#ggsave("bubble_plot11_granular_cafonly.svg", plot = bubble_plot, width = 8, height = 8, device = "svg")
+
+## Need to load the colourspec98 object here, by running Consistent_Palettes.Rmd
+
+#adding the annotation track to CAF
+library(ggnewscale)
+
+caf_bubble_plot <- ggplot(cafonly_bubble, aes(x = marker, y = CAF_Endo_Nerve_Labels, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +  # Rotate x-axis labels
+  new_scale("fill") +
+  new_scale("size") +
+  geom_tile(data = cafonly_bubble, aes(y = CAF_Endo_Nerve_Labels, x = -0.012, fill = CAF_Endo_Nerve_Labels), height = 0.5) + #somewhat working anno3
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") +
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "CAF/Endo/Nerve Label",
+       title = "") 
+
+# Save as an SVG file
+ggsave("bubble_plot_granular_cafonly_celltype_track.svg", plot = caf_bubble_plot, width = 0.25*length(unique(cafonly_bubble$marker)), height = 0.35*length(unique(cafonly_bubble$CAF_Endo_Nerve_Labels)), device = "svg")
+
+
+
+endoonly_bubble <- caf_bubble[caf_bubble$CAF_Endo_Nerve_Labels %in% c("Endothelial cells", "CCL21 high lymphatic endothelial cells","HIF1A+ endothelial cells","CXCL12 high endothelial cells", "Capillaries","CXCL12 high capillaries","PDPN high endothelial cells","Veins", "Venules", "Tip cells","CLU high endothelial cells"),]
+
+
+
+endoonly_bubble <- endoonly_bubble[endoonly_bubble$marker %in% c("CD31", "CD34","CD36", "CD105",  "pMLC2", "Podoplanin", "CLU",   "CXCL12"  , 'CCL21', 'ESM1', 'NR2F2', "CXCL13"   ,    "PNAD",     "HIF1A", "CC3",  "Ki67", 'panCK', "SMA", 'CD45'),] 
+
+
+#make endothelium-only bubbleplot
+endoonly_bubble$CAF_Endo_Nerve_Labels <- factor(endoonly_bubble$CAF_Endo_Nerve_Labels, levels = c("CCL21 high lymphatic endothelial cells","Endothelial cells", "Capillaries", "CXCL12 high capillaries", "CXCL12 high endothelial cells", "HIF1A+ endothelial cells","Veins", "Venules", "PDPN high endothelial cells", "CLU high endothelial cells","Tip cells"))
+
+
+endoonly_bubble$marker <- factor(endoonly_bubble$marker, levels =  c("CD31", "CD34","CD36", "CD105",      "CXCL12"  ,"pMLC2", 'ESM1', 'NR2F2', "Podoplanin", "CLU",          "CCL21"     ,    "CXCL13"   ,      "PNAD",    "HIF1A", "CC3", "Ki67",  'panCK', "SMA", 'CD45'))
+
+
+
+#ok, try adding the annotation track to CAF
+library(ggnewscale)
+
+endo_bubble_plot <- ggplot(endoonly_bubble, aes(x = marker, y = CAF_Endo_Nerve_Labels, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +  # Rotate x-axis labels
+  new_scale("fill") +
+  new_scale("size") +
+  geom_tile(data = endoonly_bubble, aes(y = CAF_Endo_Nerve_Labels, x = -0.012, fill = CAF_Endo_Nerve_Labels), height = 0.5) + #somewhat working anno3 
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") +
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "CAF/Endo/Nerve Label",
+       title = "") 
+
+# Save as an SVG file
+ggsave("bubble_plot_granular_endoonly_celltype_track.svg", plot = endo_bubble_plot, width = 0.35*length(unique(endoonly_bubble$marker)), height = 0.4*length(unique(endoonly_bubble$CAF_Endo_Nerve_Labels)), device = "svg")
+
+```
+
+```{for immune, myeloid + lymphoid bubbleplots}
+im <- readRDS("/Users/ferris/Desktop/IMC-PDAC/000_data/ProcessedSingleCellData/IMC_Immune_data_annotated_and_filtered_labelscombined_25July2025.rds")
+
+im_mat <- colData(im)
+im_expres <- as.data.frame(t(assays(im)$X))
+im_expres <- im_expres[!im_mat$Merged_Immune_Labels == "Others",]
+
+im_mat <- im_mat[!im_mat$Merged_Immune_Labels == "Others",]
+
+#create the singular important dataframe
+im_mat <- cbind(im_mat, im_expres)
+im_mat$Merged_Immune_Labels <- as.factor(im_mat$Merged_Immune_Labels)
+im_mat <- as.data.frame(im_mat)
+
+marker_names <- colnames(im_expres)
+marker_names <- gsub("-",".",marker_names) #make sure the formatting matches
+
+#take average z-score per immune cell label, marker
+library(dplyr)
+
+# Assuming marker_names is a vector of column names you want to average
+avg_z <- im_mat %>%
+  group_by(Merged_Immune_Labels) %>%
+  summarise(across(all_of(marker_names), mean, na.rm = TRUE))
+
+#take percent z-score > 1 per immune label, marker
+pct_z <- im_mat %>%
+  group_by(Merged_Immune_Labels) %>%
+  summarise(across(all_of(marker_names), ~ mean(. > 1, na.rm = TRUE) * 100))
+
+
+#melt and bind them together
+library(reshape2)
+avg_z_melt <- reshape2::melt(avg_z)
+colnames(avg_z_melt) <- c("Merged_Immune_Labels", "marker", "avg_z")
+pct_z_melt <- reshape2::melt(pct_z)
+colnames(pct_z_melt) <- c("Merged_Immune_Labels", "marker", "pct_z")
+
+im_bubble <- left_join(avg_z_melt, pct_z_melt, by = c("Merged_Immune_Labels", "marker"))
+
+#make a bubbleplot of x = marker, y = Caf_Endo_Nerve_Label, size = percent_exprs, fill = average_exprs
+library(ggplot2)
+library(viridis)
+library(scales)
+
+# Compute hierarchical clustering for rows and columns
+#row_order <- hclust(dist(tidyr::pivot_wider(im_bubble, names_from = marker, values_from = avg_z) %>% select(-Merged_Immune_Labels) %>% as.matrix()))$order
+#col_order <- hclust(dist(tidyr::pivot_wider(im_bubble, names_from = Merged_Immune_Labels, values_from = avg_z) %>% select(-marker) %>% as.matrix()))$order
+
+# Reorder factors based on clustering
+#im_bubble$Merged_Immune_Labels <- factor(im_bubble$Merged_Immune_Labels, levels = unique(im_bubble$Merged_Immune_Labels)[row_order])
+#im_bubble$marker <- factor(im_bubble$marker, levels = unique(im_bubble$marker)[col_order])
+
+im_bubble$Merged_Immune_Labels <- factor(im_bubble$Merged_Immune_Labels, levels = im_order_new)
+
+im_bubble$marker <- factor(im_bubble$marker, levels = c("CD20", "CD79A",
+"CD1c", "CD11c", "HLA.DR", "CLEC9A","TCRgd"  ,  
+"CD3", "CD8a", "CD4", "GZMB", "CD103", "Tbet", "CD45", "PD1", "iCOS", "FOXP3", "GATA3", "CTLA.4", "TIGIT", "NKp46",  
+ "IgM", "CD73",  "CD66b", "MPO", "CD15",
+ "CLEC4C",        "S100A9",      "Cleaved_Cas3",  "Arg1",   "CD14",
+"CD68",   
+"CD24",  "iNOS"    , "Ki67",             "PD.L1" ,           "CD31" ,          "CD56", "Vimentin",  "SMA" ,   "Ecad_Pcad",   "panCK"   
+))
+
+#drop nonessential epithelial/endothelial markers and low confidence markers
+im_bubble <- im_bubble[!im_bubble$marker %in% c("CD56", "CD31", "CD24", "Ecad_Pcad", "CD73",    "PD.L1"),]
+im_bubble <- im_bubble[!im_bubble$Merged_Immune_Labels %in% c("Undefined"),]
+
+# Create the bubble plot
+bubble_plot <- ggplot(im_bubble, aes(x = marker, y = Merged_Immune_Labels, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels
+    #scale_alpha_continuous(limits = c(0, 1), oob = scales::squish) +
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "Immune Label",
+       title = "")
+
+# Save as an SVG file
+ggsave("im_bubble_plot_lymphoid_and_myeloid_together.svg", plot = bubble_plot, width = 10, height = 12, device = "svg")
+
+
+
+#create myeloid lineage-only bubbleplot
+myeloid_bubble <- im_bubble[im_bubble$Merged_Immune_Labels %in% c("HLADR high DCs",  "HLADR high activated cDC2s" ,         "Proliferating HLADR+ cDC2s", "cDC1s" ,                              "plasmacytoid DCs" ,  "Arg1/MPO high PMN-MDSCs",   "CleavedCaspase3+ MDSCs", "MPO high PMN-MDSCs",   "PDL1+ Arg1/MPO high PMN-MDSCs",       "PDL1+ MPO high PMN-MDSCs" ,   "iNOS+ MPO+ PMN-MDSCs" ,                "MPO high neutrophils" ,  "PDL1+ MPO high neutrophils" ,         "PD1+ PMN-MDSCs" ,  "MPO+ Mo-MDSCs" ,   "Arg1+ TAMs"  ,   "CleavedCaspase3+ monocytes" ,         "HLADR high monocytes" ,  "PDL1/HLADR high monocytes",           "Proliferating monocytes",   "HLADR high TAMs" , "MPO high TAMs" ,          "TAMs",  "Vim high TAMs",  "iNOS+ TAMs"),]
+myeloid_bubble <- myeloid_bubble[myeloid_bubble$marker %in% c("CD14",
+"CD24", "CD66b",  "MPO", "CD15",
+"Arg1", "CLEC4C",      "S100A9",      "Cleaved_Cas3", "Ki67",       "CD68",    "iNOS", "CD1c", "HLA.DR", "CLEC9A" ,"CD11c", "Vimentin", "CD45", "PD1","panCK", "SMA"),]
+
+myeloid_bubble$marker <- factor(myeloid_bubble$marker, levels = c("CD45", "CD20", "CD79A",
+"CD1c", "CD11c", "HLA.DR", "CLEC9A","TCRgd"  ,  
+"CD3", "CD8a", "CD4", "GZMB", "CD103", "Tbet",   "iCOS", "FOXP3", "GATA3", "CTLA.4", "TIGIT", "NKp46",  
+ "IgM", "CD73",  "CD66b", "MPO", "CD15",
+ "CLEC4C",        "S100A9",      "Cleaved_Cas3",  "Arg1",   "CD14",
+"CD68",   
+"CD24",  "iNOS"    ,                 "PD1",       "CD31" ,          "CD56", "Vimentin", "Ecad_Pcad", "Ki67",  "SMA", "panCK"
+))
+
+myeloid_bubble$Merged_Immune_Labels <- factor(myeloid_bubble$Merged_Immune_Labels, levels = c("HLADR high DCs",              "HLADR high activated cDC2s" ,         "Proliferating HLADR+ cDC2s", "cDC1s" ,                              "plasmacytoid DCs" ,  "Arg1/MPO high PMN-MDSCs",     "CleavedCaspase3+ MDSCs", "MPO high PMN-MDSCs",   "PDL1+ Arg1/MPO high PMN-MDSCs", "PDL1+ MPO high PMN-MDSCs" ,     "iNOS+ MPO+ PMN-MDSCs" ,                "MPO high neutrophils" ,  "PDL1+ MPO high neutrophils" ,         "PD1+ PMN-MDSCs" ,   "MPO+ Mo-MDSCs" , "Mo-MDSCs"  , "CleavedCaspase3+ monocytes" ,         "HLADR high monocytes" ,       "PDL1/HLADR high monocytes",           "Proliferating monocytes", "HLADR high TAMs" ,                    "MPO high TAMs" ,   "TAMs",  "Arg1+ TAMs", "iNOS+ TAMs", "Vim high TAMs"     ))
+
+
+
+mye_bubble_plot <- ggplot(myeloid_bubble, aes(x = marker, y = Merged_Immune_Labels, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +  # Rotate x-axis labels
+  new_scale("fill") +
+  new_scale("size") +
+  geom_tile(data = myeloid_bubble, aes(y = Merged_Immune_Labels, x = -0.012, fill = Merged_Immune_Labels), height = 0.5) + #somewhat working anno3 
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") +
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "Immune Label",
+       title = "") 
+
+# Save as an SVG file
+ggsave("myeloid_bubble_plot_with_annotrack.svg", plot = mye_bubble_plot, width = 0.32*length(unique(myeloid_bubble$marker)), height = 0.35*length(unique(myeloid_bubble$Merged_Immune_Labels)), device = "svg") #7 x 7 is the perfect size for this one- but I need to come up with a rule that creates good plots! So, 5 + 0.05*length(unique(myeloid_bubble$marker))
+
+
+#create lymphoid lineage-only bubbleplot
+lymphoid_bubble <- im_bubble[im_bubble$Merged_Immune_Labels %in% c("B cells", "HLADR+ mature B cells", "Gamma delta T cells",   "CD4 T cells", "CTLA4+ TIGIT+ activated CD4 T cells", "GZMB+ PD1+ CD4 T cells",  "PDL1+ CD4 T cells",             "Tissue resident CD4 T cells",         "GZMB+ CD8 T cells" ,  "GZMB+ tissue resident CD8 T cells" ,  "HLADR+ CD8 T cells" ,    "PD1+ CD8 T cells",                    "PDL1+ CD8 T cells"  ,        "PDL1+ PD1+ tissue resident CD8 T cells",   "Tissue resident CD8 T cells",     "PD1+ tissue resident CD8 T cells",    "CD8 T cells" , "CTLA4+ TIGIT+ Tregs" ,                "CTLA4+ TIGIT+ activated Tregs" , "Tissue resident memory NK cells" 
+  ),]
+lymphoid_bubble <- lymphoid_bubble[lymphoid_bubble$marker %in% c("CD20", "CD79A",
+"CD45", "TCRgd", "CD3", "CD8a", "CD4", "GZMB", "CD103",  "HLA.DR", "CD45", "PD1",  "iCOS", "FOXP3", "IgM", "CTLA.4", "TIGIT","NKp46", "panCK", "Ki67", "SMA"),] #"Vimentin",  "TCRgd"  ,      "CD31" ,        "NKp46"    ,    "CD56", "SMA",  "Ecad_Pcad",   "panCK",  
+
+#for now, remove proliferating B cells (they will get added to Bcells upstream later)
+lymphoid_bubble <- lymphoid_bubble[!lymphoid_bubble$Merged_Immune_Labels == "Proliferating B cells",] 
+
+
+lymphoid_bubble$marker <- factor(lymphoid_bubble$marker, levels = c("CD45", "IgM", "CD79A", "CD20", 
+ "TCRgd", "PD1","CD3", "CD4", "CD8a",  "GZMB", "CD103", "HLA.DR",  "iCOS", "FOXP3",  "CTLA.4", "TIGIT", "NKp46",  "Ki67", "SMA", "panCK"))
+
+lymphoid_bubble$Merged_Immune_Labels <- factor(lymphoid_bubble$Merged_Immune_Labels, levels = c("B cells", "HLADR+ mature B cells",   "Gamma delta T cells",                 "CD4 T cells", "CTLA4+ TIGIT+ activated CD4 T cells", "GZMB+ PD1+ CD4 T cells",                   "PDL1+ CD4 T cells",             "Tissue resident CD4 T cells",          "HLADR+ CD8 T cells" ,                
+ "PD1+ CD8 T cells",                    "PDL1+ CD8 T cells"  ,      "GZMB+ CD8 T cells" ,
+ "GZMB+ tissue resident CD8 T cells" ,           
+ "PDL1+ PD1+ tissue resident CD8 T cells",   "Tissue resident CD8 T cells",        
+ "PD1+ tissue resident CD8 T cells",    "CD8 T cells" ,            
+ "CTLA4+ TIGIT+ Tregs" ,                "CTLA4+ TIGIT+ activated Tregs" ,     
+ "Tissue resident memory NK cells")) 
+
+lym_bubble_plot <- ggplot(lymphoid_bubble, aes(x = marker, y = Merged_Immune_Labels, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +  # Rotate x-axis labels
+  new_scale("fill") +
+  new_scale("size") +
+  geom_tile(data = lymphoid_bubble, aes(y = Merged_Immune_Labels, x = -0.012, fill = Merged_Immune_Labels), height = 0.5) + #somewhat working anno3 
+  scale_fill_manual(
+    values = colourspec98[[1]], 
+    guide = "none") +
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "Immune Label",
+       title = "") 
+
+# Save as an SVG file
+ggsave("lymphoid_bubbleplot_with_annotrack.svg", plot = lym_bubble_plot, width = 0.32*length(unique(lymphoid_bubble$marker)), height = 0.35*length(unique(lymphoid_bubble$Merged_Immune_Labels)), device = "svg")
+
+```
+
+```{collapsed bubbleplot of the epithelial cell types}
+
+TMA_ep_df <- read.csv("/Users/ferris/Desktop/IMC-PDAC/000_data/ProcessedSingleCellData/IMC_epithelial_data_annotated_and_filtered_25July2025.csv")
+
+markers <- colnames(TMA_ep_df)[1:41]
+
+#remove non-epithelial, broadly expressed, and low confidence markers
+markers_ep <- markers[!markers %in% c("SMA","VIM","CD45","PDPN","CD31","FAP","ANXA2","S100A9",
+                                      "KRT81","BMP4","S100P", "TNFRSF11B", "KRT14","CLU", "VCAM1")]
+
+# Assuming marker_names is a vector of column names you want to average
+avg_z <- TMA_ep_df %>%
+  group_by(Epithelial_Cell_Annotations) %>%
+  summarise(across(all_of(markers_ep), mean, na.rm = TRUE))
+avg_z$Epithelial_Cell_Annotations <- as.character(avg_z$Epithelial_Cell_Annotations)
+
+#take percent z-score > 1 per Caf_Endo_Nerve_Labels, marker
+pct_z <- TMA_ep_df %>%
+  group_by(Epithelial_Cell_Annotations) %>%
+  summarise(across(all_of(markers_ep), ~ mean(. > 1, na.rm = TRUE) * 100))
+pct_zEpithelial_Cell_Annotations <- as.character(pct_z$Epithelial_Cell_Annotations)
+
+#melt and bind them together
+library(reshape2)
+avg_z[2:27] <- scale(avg_z[2:27]) #2:42
+avg_z_melt <- melt(avg_z)
+colnames(avg_z_melt) <- c("Epithelial_Cell_Annotations", "marker", "avg_z")
+#pct_z[2:29] <- scale(pct_z[2:29])
+pct_z_melt <- melt(pct_z)
+colnames(pct_z_melt) <- c("Epithelial_Cell_Annotations", "marker", "pct_z")
+
+ep_bubble <- left_join(avg_z_melt, pct_z_melt, by = c("Epithelial_Cell_Annotations", "marker"))
+
+library(ggplot2)
+library(viridis)
+library(scales)
+
+
+ep_bubble$marker <- factor(ep_bubble$marker, levels = c("MKI67","CAIX","CASP3", "INS", "SPP1", "PRSS1", 
+                                                        "FOXA2","PDX1", "GATA6", "CLDN3","TSPAN8",
+                                                        "AGR2","TFF1","ECAD","panCK","KRT19",'KRT20', "REG4",
+                                                       "CEACAM6","MMP7", "MUC16",  
+                                                        "S100A4", "TP63","CAV1","KRT5","S100A2"))  
+
+ep_bubble$Epithelial_Cell_Annotations <- factor(ep_bubble$Epithelial_Cell_Annotations, 
+                                           levels = c("Exocrine","TFhigh_Classical","TFlow_Classical","Non-polarized", "Hybrid", "S100A4+ Non-Basal","Basal"))
+
+
+# Create the bubble plot
+ep_bubble_plot <- ggplot(ep_bubble, aes(x = marker, y = Epithelial_Cell_Annotations, size = pct_z, fill = avg_z)) +
+  geom_point(shape = 21, colour = "black", stroke = 0.2) +  # Shape 21 allows fill
+  scale_fill_viridis(limits = c(0, 3), option = "magma", direction = -1, oob = scales::squish) +  # Custom oob function
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "none"
+       ) +  # Rotate x-axis labels
+  #scale_y_discrete(labels = label_mapping_vector) +  # Manually set y-axis labels
+  labs(size = "Percentage Z", fill = "Average Z", 
+       x = "Marker", y = "Epithelial Cell Annotations",  # Keep original y-axis label
+       title = "")
+
+# Save as an SVG file
+ggsave("ep_bubble_plot_collapsed.svg", plot = ep_bubble_plot, width = 7, height = 4, device = "svg")
+
+```
