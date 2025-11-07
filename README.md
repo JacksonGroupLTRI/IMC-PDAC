@@ -1,5 +1,7 @@
 # IMC-PDAC
 
+![PDAC cores with background](PDAC_cores_with_background.png)
+
 This repository includes code and data used in the paper "Integrated spatial proteomics of human PDAC uncovers an expanded tumour–immune–stroma spectrum with genomic associations".
 
 ### Summary
