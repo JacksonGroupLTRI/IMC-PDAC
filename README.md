@@ -14,7 +14,7 @@ For this project, three serial sections of a pancreatic ductal adenocarcinoma tu
 
 ### Data
 
-***Zenodo DOI goes here***
+DOI for data archive: 10.5281/zenodo.17534881
 
 The data folders on Zenodo are structured as follows:
 
