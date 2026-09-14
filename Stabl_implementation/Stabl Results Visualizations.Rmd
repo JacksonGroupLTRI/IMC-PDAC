@@ -1,0 +1,339 @@
+---
+title: "Clean Stabl Plots"
+output: html_document
+date: "2026-09-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{feature ranking barplot}
+
+features_per_fold <- read_csv("Stabl_Data_Outputs/Selected Features STABL Lasso.csv") #this is the early fusion of the late fusion of all untreated omics data
+
+# Step 1: Clean and split strings into list of features
+features_long <- features_per_fold %>%
+  mutate(feature_list = str_extract_all(`Fold selected features`, "'([^']*)'")) %>%  # extract quoted strings
+  mutate(feature_list = lapply(feature_list, function(x) str_remove_all(x, "'"))) %>% # remove the single quotes
+  unnest(feature_list)
+
+
+feature_df <- table(features_long$feature_list)
+feature_df  <- as.data.frame(feature_df)
+colnames(feature_df) <- c("Feature", "Freq")
+
+#get high frequency only
+feature_df <- feature_df[rev(order(feature_df$Freq)),]
+
+feature_df_common <- feature_df[feature_df$Freq >= 20,]
+
+#basic ranking, without survival direction
+ggplot(feature_df_common, aes(x = reorder(Feature, Freq), y = Freq)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Feature Prevalence Across Folds",
+       x = "Feature",
+       y = "Freq") +
+  theme_minimal()
+
+# Load libraries
+library(readr)
+library(readr)
+library(dplyr)
+
+# Load all datasets
+data_path <- "Stabl_Data_No_Neoadjuvant"
+cna_train <- read_csv(file.path(data_path, "GENOMIC_copy_number_and_rearrangement_counts.csv"))
+snv_train <- read_csv(file.path(data_path,  "GENOMIC_mutations_in_10plus_patients.csv")) 
+cell_train <- read_csv(file.path(data_path,  "IMC_celltype_densities.csv"))
+menv_train <- read_csv(file.path(data_path,  "IMC_microenvironment_densities.csv"))
+marker_train <- read_csv(file.path(data_path,  "IMC_marker_intensities.csv"))
+clinical_train <- read_csv(file.path(data_path,  "CLINICAL_no_lymph.csv"))
+y_train <- read_csv("Stabl_Data_No_Neoadjuvant/Overall_Survival.csv")
+  
+#make a merged dataset for doing early fusion feature selection
+combined <- left_join(snv_train, cell_train)
+combined <- left_join(combined, menv_train)
+combined <- left_join(combined, cna_train)
+combined <- left_join(combined, marker_train)
+combined <- left_join(combined, clinical_train)
+
+# Merge all on 'PCSI_ID'
+combined_df <- list(snv_train, cell_train, menv_train, cna_train, marker_train, clinical_train, y_train) %>%
+  purrr::reduce(left_join, by = "PCSI_ID") %>%
+  left_join(y_train, by = "PCSI_ID")
+
+combined_df <- left_join(combined_df, y_train)
+# Optional: remove rows with missing outcome
+combined_df <- combined_df %>% filter(!is.na(os_cf_binary))
+
+# Separate predictors and outcome
+X <- combined_df %>% select(-PCSI_ID, -os_cf_binary)
+y <- combined_df$os_cf_binary
+
+# Step: Min-max scale each column between 0 and 1
+X_scaled <- X %>%
+  mutate(across(everything(), ~ (. - min(., na.rm = TRUE)) / 
+                                (max(., na.rm = TRUE) - min(., na.rm = TRUE))))
+
+# Compute mean per feature in each class
+bias_df <- X_scaled %>%
+  mutate(os_cf_binary = y) %>%
+  group_by(os_cf_binary) %>%
+  summarise(across(everything(), mean, na.rm = TRUE)) %>%
+  t() %>%
+  as.data.frame()
+
+# Set proper names and compute bias
+colnames(bias_df) <- c("class_0", "class_1")
+bias_df$feature <- rownames(bias_df)
+bias_df$bias_toward <- ifelse(bias_df$class_1 > bias_df$class_0, "1", "0")
+bias_df$bias_score <- bias_df$class_1 - bias_df$class_0
+
+# Final output
+bias_df <- bias_df %>%
+  filter(!(feature %in% c("os_cf_binary"))) %>%
+  arrange(desc(abs(bias_score)))
+
+#bind and use as colour
+feature_df_common <- left_join(feature_df_common, bias_df[c("feature","bias_score")], by = c("Feature" = "feature"))
+
+plot <- ggplot(feature_df_common, aes(x = reorder(Feature, Freq), y = Freq, fill = bias_score)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "",
+       x = "Feature",
+       y = "Feature Selection Stability",
+       fill = "Bias Score") +
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue" , midpoint = 0) +
+  theme_minimal()
+ggsave("Feature_ranked_above20freq_earlyfuse.svg", plot = plot, height = 4, width =6)
+
+```
+
+
+```{dataset ranking boxplot}
+# FOR THE RESUBMITTED VERSION (2026)
+final_pred_0 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_All_With_Lymph.csv") #full model with lymph
+final_pred_1 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_All_Without_Lymph.csv")
+final_pred_3 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_Genome.csv") #genomics
+final_pred_2 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_IMC.csv") #imc
+final_pred_4 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_clinical_with_lymph.csv") #clinical with lymph
+final_pred_5 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_clinical_without_lymph.csv") #clinical no lymph
+
+
+library(pROC)
+# Common settings
+n_boot <- 2000
+CI_level <- 0.95
+alpha <- (1 - CI_level) / 2
+fpr_grid <- seq(0, 1, length.out = 100)
+
+# === Function to compute interpolated mean and CI for a given dataframe ===
+get_roc_ci <- function(df, label_col = "os_cf_binary", pred_col = "X0", n_boot = 2000, alpha = 0.025) {
+  boot_tprs <- matrix(NA, nrow = n_boot, ncol = length(fpr_grid))
+  set.seed(42)
+  for (i in 1:n_boot) {
+    idx <- sample(1:nrow(df), replace = TRUE)
+    y_boot <- df[[label_col]][idx]
+    p_boot <- df[[pred_col]][idx]
+    roc_obj <- roc(y_boot, p_boot, quiet = TRUE)
+    boot_tprs[i, ] <- approx(
+      x = 1 - roc_obj$specificities,
+      y = roc_obj$sensitivities,
+      xout = fpr_grid,
+      ties = mean,
+      rule = 2
+    )$y
+  }
+  roc_main <- roc(df[[label_col]], df[[pred_col]], quiet = TRUE)
+  mean_tpr <- approx(
+    x = 1 - roc_main$specificities,
+    y = roc_main$sensitivities,
+    xout = fpr_grid,
+    ties = mean,
+    rule = 2
+  )$y
+  list(
+    mean_tpr = mean_tpr,
+    ci_lower = apply(boot_tprs, 2, quantile, probs = alpha),
+    ci_upper = apply(boot_tprs, 2, quantile, probs = 1 - alpha),
+    auc = auc(roc_main)
+  )
+}
+
+# Compute ROC + CI for both dataframes
+roc_0 <- get_roc_ci(final_pred_0)
+roc_1 <- get_roc_ci(final_pred_1)
+roc_2 <- get_roc_ci(final_pred_2)
+roc_3 <- get_roc_ci(final_pred_3)
+roc_4 <- get_roc_ci(final_pred_4)
+roc_5 <- get_roc_ci(final_pred_5)
+
+
+#try with dotted lines instead of shading
+svg("comparison_roc_curves_with_CI_2026.svg", width = 8, height = 6) 
+
+# Set up blank plot space first
+plot(fpr_grid, roc_1$mean_tpr, type = "n",
+     xlab = "1 - Specificity", ylab = "Sensitivity",
+     main = sprintf("ROC Comparison with %d%% CI", CI_level * 100),
+     xlim = c(0, 1), ylim = c(0, 1))
+
+# Function to add ROC + CI as lines
+add_roc_with_ci_lines <- function(fpr, roc_obj, col_main, col_ci = col_main) {
+  lines(fpr, roc_obj$mean_tpr, lwd = 2, col = col_main)
+}
+
+# Plot each ROC + CI
+add_roc_with_ci_lines(fpr_grid, roc_0, "orange") 
+add_roc_with_ci_lines(fpr_grid, roc_1, "gold") 
+add_roc_with_ci_lines(fpr_grid, roc_2, "#C41E3A") 
+add_roc_with_ci_lines(fpr_grid, roc_3, "#964B00") 
+add_roc_with_ci_lines(fpr_grid, roc_4, "royalblue") 
+add_roc_with_ci_lines(fpr_grid, roc_5, "lightblue")
+
+# Diagonal reference line
+abline(a = 0, b = 1, lty = 2, col = "gray")
+
+# Legend
+legend("bottomright",
+       legend = c(sprintf("Full Model with Lymph (AUC = %.3f)", roc_0$auc),
+                  sprintf("Full Model without Lymph (AUC = %.3f)", roc_1$auc),
+                  sprintf("IMC (AUC = %.3f)", roc_2$auc),
+                  sprintf("Genomics (AUC = %.3f)", roc_3$auc),
+                  sprintf("Clinical with Lymph (AUC = %.3f)", roc_4$auc),
+                  sprintf("Clinical without Lymph (AUC = %.3f)", roc_5$auc)),
+       col = c("orange", "gold",  "#C41E3A", "#964B00", "royalblue","lightblue"),
+       lwd = 2, bty = "n")
+
+dev.off()
+
+
+#make a boxplot version
+get_roc_ci <- function(df, label_col = "os_cf_binary", pred_col = "X0", n_boot = 2000, alpha = 0.025, return_aucs = TRUE) {
+  boot_tprs <- matrix(NA, nrow = n_boot, ncol = length(fpr_grid))
+  aucs <- numeric(n_boot)
+  set.seed(42)
+  for (i in 1:n_boot) {
+    idx <- sample(1:nrow(df), replace = TRUE)
+    y_boot <- df[[label_col]][idx]
+    p_boot <- df[[pred_col]][idx]
+    roc_obj <- roc(y_boot, p_boot, quiet = TRUE)
+    aucs[i] <- auc(roc_obj)
+    boot_tprs[i, ] <- approx(
+      x = 1 - roc_obj$specificities,
+      y = roc_obj$sensitivities,
+      xout = fpr_grid,
+      ties = mean,
+      rule = 2
+    )$y
+  }
+  roc_main <- roc(df[[label_col]], df[[pred_col]], quiet = TRUE)
+  mean_tpr <- approx(
+    x = 1 - roc_main$specificities,
+    y = roc_main$sensitivities,
+    xout = fpr_grid,
+    ties = mean,
+    rule = 2
+  )$y
+  return(list(
+    mean_tpr = mean_tpr,
+    ci_lower = apply(boot_tprs, 2, quantile, probs = alpha),
+    ci_upper = apply(boot_tprs, 2, quantile, probs = 1 - alpha),
+    auc = auc(roc_main),
+    aucs = if (return_aucs) aucs else NULL
+  ))
+}
+
+# Compute ROC + CI for both dataframes
+roc_0 <- get_roc_ci(final_pred_0)
+roc_1 <- get_roc_ci(final_pred_1)
+roc_2 <- get_roc_ci(final_pred_2)
+roc_3 <- get_roc_ci(final_pred_3)
+roc_4 <- get_roc_ci(final_pred_4)
+roc_5 <- get_roc_ci(final_pred_5)
+
+library(tibble)
+library(dplyr)
+library(ggplot2)
+
+auc_df <- bind_rows(
+  tibble(AUC = roc_0$aucs, Model = "Full + Lymph"),
+  tibble(AUC = roc_1$aucs, Model = "Full - Lymph"),
+  tibble(AUC = roc_2$aucs, Model = "IMC"),
+  tibble(AUC = roc_3$aucs, Model = "Genomics"),
+  tibble(AUC = roc_4$aucs, Model = "Clinical + Lymph"),
+  tibble(AUC = roc_5$aucs, Model = "Clinical - Lymph")
+)
+
+
+means <- auc_df %>% 
+  group_by(Model) %>% 
+  summarise(mean = mean(AUC))
+
+means <- means[order(means$mean),]
+
+# Reorder the Model factor by mean AUC
+auc_df <- auc_df %>%
+  mutate(Model = factor(Model, levels = means$Model))
+
+
+#dataset comparison as boxplots
+svg("comparison_roc_curves_boxplot_version_2026.svg", width = 8, height = 6)
+ggplot(auc_df, aes(x = Model, y = AUC, fill = Model)) +
+  geom_boxplot(alpha = 0.8, outlier.shape = NA) +
+  geom_jitter(width = 0.2, size = 0.001, alpha = 0.3, shape = 16) +
+  scale_fill_manual(values = c( 
+    "Full + Lymph" = "orange",
+    "Full - Lymph" = "gold",
+    "IMC" = "#C41E3A", 
+    "Genomics" = "#964B00",
+    "Clinical + Lymph" = "royalblue", 
+    "Clinical - Lymph" = "lightblue" 
+  )) +
+  labs(title = "Bootstrapped AUC Distributions",
+       y = "AUC", x = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),
+        legend.position = "none")
+dev.off()
+
+```
+
+
+```{plot of number of features selected in each model type}
+#number of features were selected in each run with 95% confidence intervals
+feat_red <- read_csv("/Users/ferris/Downloads/2026S_Fig6c_data_for_feature_reduction.csv") 
+
+  
+library(ggplot2)
+library(dplyr)
+library(ggplot2)
+library(dplyr)
+
+# Create combined label
+feat_red <- feat_red %>%
+  mutate(Label = paste(Type, Model, sep = " + "))
+
+feat_red$Label <- factor(feat_red$Label, levels = c("LateFusion + Lasso",
+                                                    "LateFusion + Stabl Lasso",
+                                                    "EarlyFusion + Lasso",
+                                                    "EarlyFusion + Stabl Lasso"))
+
+# Swapped axis plot
+svg("average_number_of_features_per_model.svg", height = 5, width = 5)
+ggplot(feat_red, aes(y = Features, x = Label)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = Feature_CI_Low, ymax = Feature_CI_high), width = 0.2) +
+  theme_minimal(base_size = 12) +
+  labs(
+    y = "Number of Features Selected Per Fold",
+    x = "Model",
+    title = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+dev.off()
