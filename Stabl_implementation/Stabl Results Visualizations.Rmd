@@ -116,7 +116,7 @@ ggsave("Feature_ranked_above20freq_earlyfuse.svg", plot = plot, height = 4, widt
 
 
 ```{dataset ranking boxplot}
-# FOR THE RESUBMITTED VERSION (2026)
+
 final_pred_0 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_All_With_Lymph.csv") #full model with lymph
 final_pred_1 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_All_Without_Lymph.csv")
 final_pred_3 <- read.csv("Stabl_Data_Outputs/Lasso_predictions/Lasso predictions_Genome.csv") #genomics
@@ -295,7 +295,7 @@ ggplot(auc_df, aes(x = Model, y = AUC, fill = Model)) +
     "Clinical + Lymph" = "royalblue", 
     "Clinical - Lymph" = "lightblue" 
   )) +
-  labs(title = "Bootstrapped AUC Distributions",
+  labs(title = "AUC Distributions",
        y = "AUC", x = NULL) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 25, hjust = 1),
@@ -304,36 +304,3 @@ dev.off()
 
 ```
 
-
-```{plot of number of features selected in each model type}
-#number of features were selected in each run with 95% confidence intervals
-feat_red <- read_csv("/Users/ferris/Downloads/2026S_Fig6c_data_for_feature_reduction.csv") 
-
-  
-library(ggplot2)
-library(dplyr)
-library(ggplot2)
-library(dplyr)
-
-# Create combined label
-feat_red <- feat_red %>%
-  mutate(Label = paste(Type, Model, sep = " + "))
-
-feat_red$Label <- factor(feat_red$Label, levels = c("LateFusion + Lasso",
-                                                    "LateFusion + Stabl Lasso",
-                                                    "EarlyFusion + Lasso",
-                                                    "EarlyFusion + Stabl Lasso"))
-
-# Swapped axis plot
-svg("average_number_of_features_per_model.svg", height = 5, width = 5)
-ggplot(feat_red, aes(y = Features, x = Label)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = Feature_CI_Low, ymax = Feature_CI_high), width = 0.2) +
-  theme_minimal(base_size = 12) +
-  labs(
-    y = "Number of Features Selected Per Fold",
-    x = "Model",
-    title = ""
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-dev.off()
